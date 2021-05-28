@@ -8,9 +8,9 @@ G[<program>]:
 <def> → '*' ident <deflist> | ident <idtail>                def是只是声明，不能赋值，前一半指针，后一半变量，
                                                             可以是函数定义或声明，指针没有数组
 <deflist> → ','  <defdata> <deflist> | ';'                  第一个变量之后的部分
-<defdata> → ident <varrdef> | * ident                       这个是每一个变量
-<varrdef> → { '[' num ']' }                                 数组形式
-<idtail> → <varrdef> <deflist> | '(' <para> ')' <functail>  主要是后面函数定义的部分
+<defdata> → ident <vardef> | '*' ident                       这个是每一个变量
+<vardef> → { '[' num ']' }                                 数组形式
+<idtail> → <vardef> <deflist> | '(' <para> ')' <functail>  主要是后面函数定义的部分
 <functail> → <block> | ';'
 <para> → <onepara> { ','  <onepara> } | ε
 <onepara> → <type> <paradata>
@@ -20,12 +20,13 @@ G[<program>]:
 下面就是函数里面的部分了
 <block> → '{' <subprogram> '}'                              block是{}包含的
 <subprogram> → {<onestatement>}                             可以有多个onestatement
-<onestatement> -> <localdef> | <statement>
+<onestatement> → <localdef> | <statement>
 <localdef> → <type> <defdata> <deflist>                     好像还是一样的
 下面主要就是语句了
 <statement> → <whilestat>|
     <breakstat> |
     <continuestat> |
+    <ifstat> |                                              这里是加的，原来没有，得有啊，要不没人用ifstat了
     <returnstat> |
     <blockstat> |
     <assignstat> |
@@ -40,12 +41,12 @@ G[<program>]:
 <whilestat> → 'while' '(' <altexpr> ')' <statement>
 <ifstat> → 'if'  '(' <expr> ')'  <block> <elsestat>
 <elsestat> → 'else' <block> | ε
-<altexpr> → <expr> | ε
 这个以后是表达式部分，应该是有结果的那种
-<expr> → <assexpr>                                        
-<assexpr> → <orexpr> <asstail>                              
+<altexpr> → <expr> | ε
+<expr> → <assexpr>
+<assexpr> → <orexpr> <asstail> 
 <asstail> → '='  <assexpr>  <asstail> | ε
-逻辑表达式部分
+之后应该算主要是逻辑表达式部分，但这orexpr又可以只包含变量名，实在离谱
 <orexpr> → <andexpr> <ortail>                               这个是逻辑表达式，与或非那种
 <ortail> → '||' <andexpr> <ortail> | ε                      应该是||的优先级高于&&高于普通
 <andexpr> → <cmpexpr> <andtail>
@@ -55,7 +56,6 @@ G[<program>]:
 <cmps> → '>=' | '>' | '<' | '<=' | '==' | '!='
 <aloexpr> → <item> <alotail>
 <alotail> → <addsub> <item> <alotail> | ε
-
 <addsub> → '+' | '-'
 <item> → <factor> <itemtail>
 <itemtail> → <muldiv> <factor> <itemtail> | ε
@@ -73,6 +73,6 @@ G[<program>]:
 <arg> → <expr>
 
 非终结符为<>括起来的符号
-[]括起来的是可选的意思，{}括起来是重复的意思
-终结符是由单引号括起的串，或者是 ident 、num这样的记号
+[]括起来的是可选的意思，{}括起来是可重复的意思
+终结符是由单引号括起的串，或者是ident 、num这样的记号
 ident代表标识符，num代表整型常量

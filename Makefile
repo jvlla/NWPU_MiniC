@@ -1,58 +1,48 @@
 CFLAGS = -g
 
-.PHONY: all, prepare, compiler_haotian, clean, tmpclean, zip
+DIR_TABLE = SymTable
+DIR_TREE = SynTree
+DIR_TARGET = obj
 
-all: prepare compiler_haotian
+SOURCE_TABLE = $(wildcard $(DIR_TABLE)/*.cpp)
+SOURCE_TREE = $(wildcard $(DIR_TREE)/*.cpp)
 
-# prepare: lexer.l parser.y 
-# 	flex -o lexer.c --header-file=lexer.h lexer.l
-# 	bison -d -o parser.c parser.y
+TARGET_TABLE = $(patsubst %.cpp, $(DIR_TARGET)/%.o,$(notdir $(SOURCE_TABLE)))
+TARGET_TREE = $(patsubst %.cpp, $(DIR_TARGET)/%.o,$(notdir $(SOURCE_TREE)))
 
-# compiler_haotian: lexer.o parser.o main.o
-# 	gcc $(CFLAGS) -o $@ lexer.o parser.o main.o
+.PHONY: all, prepare, compiler_haotian, clean, tmpclean
 
-# # expr.o: expr.c expr.h
-# # 	gcc $(CFLAGS) -c -o expr.o expr.c
+all: prepare $(TARGET_TABLE) $(TARGET_TREE) compiler_haotian
+# all: prepare $(TARGET_TABLE) compiler_haotian
 
-# lexer.o: lexer.c lexer.h
-# 	gcc $(CFLAGS) -c -o lexer.o lexer.c
-
-# parser.o: parser.c parser.h lexer.h
-# 	gcc $(CFLAGS) -c -o parser.o parser.c
-
-# main.o: main.c lexer.h parser.h
-# 	gcc $(CFLAGS) -c -o main.o main.c
-
-# 全变成cpp好像有问题
 prepare: lexer.l parser.y 
 	flex -o lexer.cpp --header-file=lexer.h lexer.l
 	bison -d -o parser.cpp parser.y
 
-compiler_haotian: lexer.o parser.o main.o
-	gcc $(CFLAGS) -o $@ lexer.o parser.o main.o
+$(DIR_TARGET)/lexer.o: lexer.cpp lexer.h
+	g++ $(CFLAGS) -c -o $@ lexer.cpp
 
-# expr.o: expr.c expr.h
-# 	gcc $(CFLAGS) -c -o expr.o expr.c
+$(DIR_TARGET)/parser.o: parser.cpp parser.hpp lexer.h
+	g++ $(CFLAGS) -c -o $@ parser.cpp
 
-lexer.o: lexer.cpp lexer.h
-	g++ $(CFLAGS) -c -o lexer.o lexer.cpp
+$(DIR_TARGET)/%.o: $(DIR_TABLE)/%.cpp
+	g++ $(CFLAGS) -c -o $@ $<
 
-parser.o: parser.cpp parser.hpp lexer.h
-	g++ $(CFLAGS) -c -o parser.o parser.cpp
+$(DIR_TARGET)/%.o: $(DIR_TREE)/%.cpp
+	g++ $(CFLAGS) -c -o $@ $<
 
-main.o: main.cpp lexer.h parser.hpp
-	g++ $(CFLAGS) -c -o main.o main.cpp
+$(DIR_TARGET)/main.o: main.cpp lexer.h parser.hpp
+	g++ $(CFLAGS) -c -o $@ main.cpp
 
-tmpclean:
-	rm -rf *.o
+compiler_haotian: $(DIR_TARGET)/lexer.o $(DIR_TARGET)/parser.o $(DIR_TARGET)/main.o
+	g++ $(CFLAGS) -o $@ $(DIR_TARGET)/main.o $(DIR_TARGET)/lexer.o $(DIR_TARGET)/parser.o $(TARGET_TABLE) $(TARGET_TREE)
+#	g++ $(CFLAGS) -o $@ $(DIR_TARGET)/main.o $(DIR_TARGET)/lexer.o $(DIR_TARGET)/parser.o $(TARGET_TABLE)
 
 clean:
-	rm -rf *.o
-	rm -rf *.dSYM
-	rm -f lexer.c lexer.cpp lexer.h
-	rm -f parser.c parser.cpp parser.h parser.hpp
+	rm -rf $(DIR_TARGET)/*
+	rm -f lexer.cpp lexer.h
+	rm -f parser.cpp parser.hpp
 	rm -f compiler_haotian
 
-zip:
-	tar --exclude *.tar.* -cvf compiler_haotian.tar *
-	gzip -f compiler_haotian.tar
+tmpclean:
+	rm -rf $(DIR_TARGET)/*.o

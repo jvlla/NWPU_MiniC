@@ -67,9 +67,11 @@ white_line  \n|\r\n
 ";"             {return ';';}
  /* 不能放在前面，因为前面的规则先匹配 */
 {ident}         {
+                    yylval.token = yytext;
                     return IDENT;
                 }
 {num}           {
+                    yylval.num = (int)strtol(yytext, (char **)NULL, 10);
                     return NUM;
                 }
 
@@ -78,7 +80,7 @@ white_line  \n|\r\n
 {white_line}    {}
 
 .               {
-                    printf("Invalid char %s\n",yytext);
+                    cout << "Invalid char " << yytext << endl;
                     return ERRORCHAR;
                 }
 %%
