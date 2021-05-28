@@ -521,13 +521,11 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "lexer.l"
 #line 2 "lexer.l"
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
+#include "common.h"
 #include "parser.hpp"
 
 #define		ERRORCHAR	600
-#line 531 "lexer.cpp"
+#line 529 "lexer.cpp"
 /* %option c++ */
 /************************************
 *	MACRO DEFINITION	*
@@ -535,7 +533,7 @@ char *yytext;
 /*****************************************
 *	RECOGNIION RULES	         *
 *****************************************/
-#line 539 "lexer.cpp"
+#line 537 "lexer.cpp"
 
 #define INITIAL 0
 
@@ -752,12 +750,12 @@ YY_DECL
 		}
 
 	{
-#line 25 "lexer.l"
+#line 23 "lexer.l"
 
-#line 27 "lexer.l"
+#line 25 "lexer.l"
  /* 其实下面分类并不准确，比如*是指针也是乘号等 */
  /* 程序控制字 */
-#line 761 "lexer.cpp"
+#line 759 "lexer.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -826,193 +824,193 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 29 "lexer.l"
+#line 27 "lexer.l"
 {return IF;}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 30 "lexer.l"
+#line 28 "lexer.l"
 {return ELSE;}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 31 "lexer.l"
+#line 29 "lexer.l"
 {return WHILE;}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 32 "lexer.l"
+#line 30 "lexer.l"
 {return BREAK;}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 33 "lexer.l"
+#line 31 "lexer.l"
 {return CONTINUE;}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 34 "lexer.l"
+#line 32 "lexer.l"
 {return RETURN;}
 	YY_BREAK
 /* 赋值等号 */
 case 7:
 YY_RULE_SETUP
-#line 36 "lexer.l"
+#line 34 "lexer.l"
 {return '=';}
 	YY_BREAK
 /* 类型 */
 case 8:
 YY_RULE_SETUP
-#line 38 "lexer.l"
+#line 36 "lexer.l"
 {return INT;};
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 39 "lexer.l"
+#line 37 "lexer.l"
 {return VOID;}
 	YY_BREAK
 /* 双目逻辑运算符 */
 case 10:
 YY_RULE_SETUP
-#line 41 "lexer.l"
+#line 39 "lexer.l"
 {return OR;}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 42 "lexer.l"
+#line 40 "lexer.l"
 {return AND;}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 43 "lexer.l"
+#line 41 "lexer.l"
 {return GE;}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 44 "lexer.l"
+#line 42 "lexer.l"
 {return '>';}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 45 "lexer.l"
+#line 43 "lexer.l"
 {return '<';}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 46 "lexer.l"
+#line 44 "lexer.l"
 {return LE;}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 47 "lexer.l"
+#line 45 "lexer.l"
 {return EQ;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 48 "lexer.l"
+#line 46 "lexer.l"
 {return NE;}
 	YY_BREAK
 /* 单目逻辑运算符 */
 case 18:
 YY_RULE_SETUP
-#line 50 "lexer.l"
+#line 48 "lexer.l"
 {return '!';}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 51 "lexer.l"
+#line 49 "lexer.l"
 {return '&';}
 	YY_BREAK
 /* 加减乘除 */
 case 20:
 YY_RULE_SETUP
-#line 53 "lexer.l"
+#line 51 "lexer.l"
 {return '+';}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 54 "lexer.l"
+#line 52 "lexer.l"
 {return '-';}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 55 "lexer.l"
+#line 53 "lexer.l"
 {return '*';}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 56 "lexer.l"
+#line 54 "lexer.l"
 {return '/';}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 57 "lexer.l"
+#line 55 "lexer.l"
 {return '%';}
 	YY_BREAK
 /* 自加减 */
 case 25:
 YY_RULE_SETUP
-#line 59 "lexer.l"
+#line 57 "lexer.l"
 {return INCR;}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 60 "lexer.l"
+#line 58 "lexer.l"
 {return DECR;}
 	YY_BREAK
 /* 各种括号 */
 case 27:
 YY_RULE_SETUP
-#line 62 "lexer.l"
+#line 60 "lexer.l"
 {return '{';}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 63 "lexer.l"
+#line 61 "lexer.l"
 {return '}';}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 64 "lexer.l"
+#line 62 "lexer.l"
 {return '(';}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 65 "lexer.l"
+#line 63 "lexer.l"
 {return ')';}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 66 "lexer.l"
+#line 64 "lexer.l"
 {return '[';}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 67 "lexer.l"
+#line 65 "lexer.l"
 {return ']';}
 	YY_BREAK
 /* 逗号类 */
 case 33:
 YY_RULE_SETUP
-#line 69 "lexer.l"
+#line 67 "lexer.l"
 {return ',';}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 70 "lexer.l"
+#line 68 "lexer.l"
 {return ';';}
 	YY_BREAK
 /* 不能放在前面，因为前面的规则先匹配 */
 case 35:
 YY_RULE_SETUP
-#line 72 "lexer.l"
+#line 70 "lexer.l"
 {
                     return IDENT;
                 }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 75 "lexer.l"
+#line 73 "lexer.l"
 {
                     return NUM;
                 }
@@ -1020,29 +1018,29 @@ YY_RULE_SETUP
 /* 遇到空白不做任何操作，跳过；嗯，应该可以 */
 case 37:
 YY_RULE_SETUP
-#line 80 "lexer.l"
+#line 78 "lexer.l"
 {}
 	YY_BREAK
 case 38:
 /* rule 38 can match eol */
 YY_RULE_SETUP
-#line 81 "lexer.l"
+#line 79 "lexer.l"
 {}
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 83 "lexer.l"
+#line 81 "lexer.l"
 {
-                    printf("Invalid char %s\n",yytext);
+                    cout << "Invalid char " << yytext << endl;
                     return ERRORCHAR;
                 }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 87 "lexer.l"
+#line 85 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1046 "lexer.cpp"
+#line 1044 "lexer.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2059,5 +2057,5 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 87 "lexer.l"
+#line 85 "lexer.l"
 

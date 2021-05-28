@@ -74,11 +74,10 @@
 #include <string.h>
 #include "lexer.h"
 #include "parser.hpp"
-#include "SynTree/Box.h"
 
 void yyerror(const char * msg);
 
-#line 82 "parser.cpp"
+#line 81 "parser.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -523,7 +522,7 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    38,    38,    44
+       0,    37,    37,    40
 };
 #endif
 
@@ -1311,25 +1310,22 @@ yyreduce:
   switch (yyn)
     {
   case 2:
-#line 39 "parser.y"
+#line 38 "parser.y"
             {
-                Box test;
-                test.height = 1;
-                printf("%lf\n", test.height);
             }
-#line 1321 "parser.cpp"
+#line 1317 "parser.cpp"
     break;
 
   case 3:
-#line 45 "parser.y"
+#line 41 "parser.y"
             {
                 yyerror("as expected");
             }
-#line 1329 "parser.cpp"
+#line 1325 "parser.cpp"
     break;
 
 
-#line 1333 "parser.cpp"
+#line 1329 "parser.cpp"
 
       default: break;
     }
@@ -1561,7 +1557,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 70 "parser.y"
+#line 66 "parser.y"
 
 
 void yyerror(const char * msg)

@@ -1,7 +1,5 @@
 %{
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
+#include "common.h"
 #include "parser.hpp"
 
 #define		ERRORCHAR	600

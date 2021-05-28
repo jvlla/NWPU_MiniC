@@ -36,9 +36,6 @@ void yyerror(const char * msg);
 %%
 Input  :  IDENT INCR NUM
             {
-                Box test;
-                test.height = 1;
-                printf("%lf\n", test.height);
             }
         | NUM GE IDENT
             {
