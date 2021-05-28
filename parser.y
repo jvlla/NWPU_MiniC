@@ -3,6 +3,8 @@
 #include "lexer.h"
 #include "parser.hpp"
 
+using namespace std;
+
 void yyerror(const char * msg);
 
 extern SymTable sym_table;
@@ -12,7 +14,7 @@ extern SynTree syn_tree;
 %union
 {
     int num;
-    string name;
+    char * name;
     SynNode * p_node;
 };
 

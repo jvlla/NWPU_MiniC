@@ -67,7 +67,10 @@ white_line  \n|\r\n
 ";"             {return ';';}
  /* 不能放在前面，因为前面的规则先匹配 */
 {ident}         {
-                    yylval.token = yytext;
+                    yylval.name = (char *) malloc(100);
+                    memset(yylval.name, 0, 100);
+                    memcpy(yylval.name, yytext, yyleng);
+                    
                     return IDENT;
                 }
 {num}           {
