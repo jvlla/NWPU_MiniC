@@ -47,7 +47,7 @@ white_line  \n|\r\n
 "!"             {return '!';}
 "&"             {return '&';}
  /* 加减乘除 */
-"+"             {return '+';}
+"+"             { cout << "+" << endl; return '+';}
 "-"		        {return '-';}
 "*"             {return '*';}
 "/"             {return '/';}

@@ -2,6 +2,7 @@
 #include "lexer.h"
 #include "parser.hpp"
 
+using namespace std;
 extern int yyparse (void);
 
 SymTable sym_table;
