@@ -26,7 +26,7 @@ void SynNode::set_prev(SynNode * p_prev)
 void SynNode::emit_link(std::ofstream * p_fout) const
 {
     if (this->p_prev_ != NULL)
-        *p_fout << this->get_node_name() << " -- " << this->p_prev_->get_node_name() << std::endl;
+        *p_fout << this->p_prev_->get_node_name() << " -- " << this->get_node_name() << std::endl;
 }
 
 // 被gen_graph()调用，产生图中节点

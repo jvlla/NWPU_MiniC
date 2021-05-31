@@ -2,7 +2,7 @@
 #include "common.h"
 #include "lexer.h"
 #include "parser.hpp"
-#include "structs.h"
+#include "helper.h"
 
 using namespace std;
 
@@ -17,9 +17,8 @@ extern SynTree syn_tree;
     int num;
     char * name;  // 终结符ident返回值，从词法分析
     SynNode * p_node;  // 
-    // char * operation;  // 操作符返回值
-    struct op_p_node * p_op_p_node;
-    char * operation;
+    struct operator_node * p_operator_node;
+    Operator * p_operator;
 };
 
 /* 每行下面的注释是这些终结符代表的意思 */
@@ -41,10 +40,11 @@ extern SynTree syn_tree;
 %type<p_node> Oneparas Onepara Paradata Paradatatail Paradatatails 
 %type<p_node> Subprogram Onestatement Localdef
 %type<p_node> Statement Breakstat Continuestat Returnstat Blockstat Assignstat Emptystat Whilestat Ifstat Elsestat
-%type<p_node> Altexpr Expr Assexpr Asstail Orexpr Ortail Andexpr Andtail Cmpexpr Cmptail Cmps
-%type<p_node>  Aloexpr Item Itemtail Factor Muldiv Lop Val Rop Elem Idexpr Literal Realarg Arg Realargs
-%type<p_op_p_node> Alotail
-%type<operation> Addsub
+%type<p_node> Altexpr Expr Assexpr Orexpr Andexpr Cmpexpr
+%type<p_node>  Aloexpr Item Factor Val Elem Idexpr Literal Realarg Arg Realargs
+%type<p_operator_node> Alotail Itemtail Cmptail Andtail Ortail Asstail
+%type<p_operator> '=' AND OR
+%type<p_operator> Addsub Muldiv Lop Cmps Rop
 
 %start  Program
 
@@ -60,8 +60,6 @@ extern SynTree syn_tree;
 
 Program         :  Expr
                     {
-                        if ($1 != NULL)
-                            cout << "not null" << endl;
                         syn_tree.get_root()->add_sub_program($1);
                     }
 
@@ -266,194 +264,140 @@ Ifstat          : IF  '(' Expr ')' Statement Elsestat
                     };
 
 Elsestat        :
-                    {}
+                    { $$ = NULL }
                 | ELSE Statement
                     {
                         yyerror("unsupported Elsestat");
                     };
-
+// --完成--
 // 表达式Expr
 Altexpr         :
-                    {}
+                    { $$ = NULL }
                 | Expr
                     {
+                        $$ = $1;
                         yyerror("unsupported Altexpr");
                     };
-
+// --完成--
 Expr            : Assexpr
                     {
                         $$ = $1;
                         yyerror("unsupported Expr");
                     };
-
+// --完成-- 可能
 Assexpr         : Orexpr Asstail
                     {
-                        cout << $1 << " " << $2 << endl;
-                        if ($1 != NULL && $2 != NULL)
-                        {
-                            Op * p_op = new Op($1, $2, "=", yylineno);
-                            $$ = p_op;
-                        }
-                        else if ($1 != NULL && $2 == NULL)
-                            $$ = $1;
-                        else if ($1 == NULL && $2 != NULL)
-                            yyerror("the left of = is blank");
-                        else
-                            $$ = NULL;
+                        // if ($1 != NULL && $2 != NULL)
+                        // {
+                        //     Operator * p_operator = new Operator("=");
+                        //     Op * p_op = new Op($1, $2, p_operator, yylineno);
+                        //     $$ = p_op;
+                        // }
+                        // else if ($1 != NULL && $2 == NULL)
+                        //     $$ = $1;
+                        // else if ($1 == NULL && $2 != NULL)
+                        //     yyerror("the left of = is blank");
+                        // else
+                        //     $$ = NULL;
+                        $$ = node_struct($1, $2, yylineno);
                         yyerror("unsupported Assexpr");
                     };
-
-Asstail         :
-                    {
-                        $$ = NULL;
-                    }
+// --完成--
+Asstail         :   { $$ = NULL; }
                 | '=' Assexpr Asstail
                     {
-                        if ($3 == NULL)
-                            $$ = $2;
+                        $$ = operator_node_struct($1, $2, $3, yylineno);
                         yyerror("unsupported Asstail");
                     };
-
+// --完成--
 Orexpr          : Andexpr Ortail
                     {
-                        cout << $1 << " " << $2 << endl;
-                        if ($2 == NULL)
-                            $$ = $1;
+                        $$ = node_struct($1, $2, yylineno);
                         yyerror("unsupported Orexpr");
                     };
-
-Ortail          :
-                    {
-                        $$ = NULL;
-                    }
+// --完成--
+Ortail          :   { $$ = NULL; }
                 | OR Andexpr Ortail
                     {
+                        $$ = operator_node_struct($1, $2, $3, yylineno);
                         yyerror("unsupported Ortail");
                     };
-
+// --完成--
 Andexpr         : Cmpexpr Andtail
                     {
-                        if ($2 == NULL)
-                            $$ = $1;
+                        $$ = node_struct($1, $2, yylineno);
                         yyerror("unsupported Andexpr");
                     };
-
-Andtail         :
-                    {
-                        $$ = NULL;
-                    }
+// --完成--
+Andtail         :   { $$ = NULL; }
                 | AND Cmpexpr Andtail
                     {
+                        $$ = operator_node_struct($1, $2, $3, yylineno);
                         yyerror("unsupported Andexpr");
                     };
-
+// --完成--
 Cmpexpr         : Aloexpr Cmptail
                     {
-                        if ($2 == NULL)
-                            $$ = $1;
+                        $$ = node_struct($1, $2, yylineno);
                         yyerror("unsupported Cmpexpr");
                     };
-
-Cmptail         :
-                    {
-                        $$ = NULL;
-                    }
+// --完成--
+Cmptail         :   { $$ = NULL; }
                 | Cmps Aloexpr Cmptail
                     {
+                        $$ = operator_node_struct($1, $2, $3, yylineno);
                         yyerror("unsupported Cmptail");
                     };
-
-Cmps            : GE | '>' | '<' | LE | EQ | NE
-                    {
-                        yyerror("unsupported Cmps");
-                    };
-
+// --完成--
+Cmps            : GE { $$ = new Operator(">="); }
+                | '>' { $$ = new Operator(">"); } 
+                | '<' { $$ = new Operator("<"); } 
+                | LE { $$ = new Operator("<="); }
+                | EQ { $$ = new Operator("=="); }
+                | NE { $$ = new Operator("!="); }
+// --完成--
 Aloexpr         : Item Alotail
                     {
-                        cout << $1 << " " << $2 << endl;
                         if ($2 != NULL)
-                        {
-                            Op * p_op;
-                            p_op = new Op($1, $2->p_node, $2->operation, yylineno);
-                            $$ = p_op;
-                        }
+                            $$ = new Op($1, $2->p_node, $2->p_operator, yylineno);
                         else
                             $$ = $1;
                         yyerror("unsupported Aloexpr");
                     };
-
+// --完成--
 Alotail         :   { $$ = NULL; }
                 | Addsub Item Alotail
                     {
-                        cout << $1 << $2 << $3 << endl;
-                        struct op_p_node * p_op_p_node = new struct op_p_node();  // 返回值
-                        p_op_p_node->operation = $1;  // Addsub肯定不为空，直接赋
-                        // 如果右边仍有加减法，即Alotail不为空
-                        if ($3 != NULL)
-                        {
-                            // 但没有左操作数，报错 这情况是不是没法有？
-                            if ($2 == NULL)
-                                yyerror("Item is NULL");
-                            // 生成语法树上新的Op节点
-                            Op * p_op;
-                            if ($3->operation == 0)
-                                p_op = new Op($2, $3->p_node, "+", yylineno);
-                            else
-                                p_op = new Op($2, $3->p_node, "-", yylineno);
-                            free($3);  // 这个应该可以释放吧
-                            // 赋给返回值
-                            p_op_p_node->p_node = p_op;
-                        }
-                        else
-                        {
-                            // Item为空可能吗？好像不，算了，保险一点
-                            if ($2 == NULL)
-                                yyerror("Item is NULL");
-                            // Item赋给返回值
-                            p_op_p_node->p_node = $2;
-                        }
-
-                        $$ = p_op_p_node;
+                        $$ = operator_node_struct($1, $2, $3, yylineno);
                         yyerror("unsupported Alotail");
                     };
+// --完成--
 // 之后这些应该就是用来算数的了
-Addsub          : '+'   // 这个有不被释放的危险啊
-                    { 
-                        $$ = (char *) malloc(10);
-                        memset($$, 0, 10);
-                        $$[0] = '+';
-                    }
-                | '-' 
-                    { 
-                        $$ = (char *) malloc(10);
-                        memset($$, 0, 10);
-                        $$[0] = '-';
-                    };
-
+Addsub          : '+' { $$ = new Operator("+"); }
+                | '-' { $$ = new Operator("-"); };
+// --完成--
 Item            : Factor Itemtail
                     {
-                        cout << $1 << " " << $2 << endl;
-                        if ($2 == NULL)
+                        if ($2 != NULL)
+                            $$ = new Op($1, $2->p_node, $2->p_operator, yylineno);
+                        else
                             $$ = $1;
                         yyerror("unsupported Item");
                     };
-
-Itemtail        :
-                    {
-                        $$ = NULL;
-                    }
+// --完成--
+Itemtail        :   { $$ = NULL; }
                 | Muldiv Factor Itemtail
                     {
+                        $$ = operator_node_struct($1, $2, $3, yylineno);
                         yyerror("unsupported Itemtail");
                     };
-
-Muldiv          : '*' | '/'
-                    {
-                        yyerror("unsupported Muldiv");
-                    };
-
+// --完成--
+Muldiv          : '*' { $$ = new Operator("*"); }
+                | '/' { $$ = new Operator("/"); };
+// --完成--
 Factor          : Lop Factor
                     {
+                        $$ = new Unary($2, $1, yylineno);
                         yyerror("unsupported Factor Lop Factor");
                     }
                 | Val
@@ -461,12 +405,14 @@ Factor          : Lop Factor
                         $$ = $1;
                         yyerror("unsupported Factor Val");
                     }
-
-Lop             : '!' | '-' | '&' | '*' | INCR | DECR
-                    {
-                        yyerror("unsupported Lop");
-                    }
-
+// --完成--
+Lop             : '!' { $$ = new Operator("!"); }
+                | '-' { $$ = new Operator("-"); }
+                | '&' { $$ = new Operator("&"); }
+                | '*' { $$ = new Operator("*"); }  // 这个应该是解引用符号吧，回头要注意
+                | INCR { $$ = new Operator("++"); } 
+                | DECR { $$ = new Operator("--"); };
+// --完成--
 Val             : Elem
                     {
                         $$ = $1;
@@ -474,37 +420,31 @@ Val             : Elem
                     }
                 | Elem Rop
                     {
+                        $$ = new Unary($1, $2, yylineno);
                         yyerror("unsupported Val Rop");
                     }
-
-Rop             : INCR | DECR
-                    {
-                        yyerror("unsupported Rop");
-                    }
+// --完成--
+Rop             : INCR { $$ = new Operator("++"); }
+                | DECR { $$ = new Operator("--"); };
 
 Elem            : IDENT Idexpr
                     {
                         if ($2 == NULL)
-                        {
-                            Variable * p_variable = new Variable($1, &sym_table, yylineno);
-                            $$ = p_variable;
-                        }
+                            $$ = new Variable($1, &sym_table, yylineno);
                         yyerror("unsupported Elem IDENT Idexpr");
                     }
                 | '(' Expr')'
                     {
+                        $$ = $2;
                         yyerror("unsupported Elem (Expr)");
                     }
-                | Literal
-                    {
-                        $$ = $1;
-                        yyerror("unsupported Elem Literal");
-                    }
+                | Literal 
+                    { 
+                        $$ = $1; 
+                        yyerror("unsupported Elem Literal"); 
+                    };
 
-Idexpr          :
-                    {
-                        $$ = NULL;
-                    }
+Idexpr          :   { $$ = NULL; }
                 | '[' Expr ']' 
                     {
                         yyerror("unsupported Idexpr [Expr]");
@@ -513,12 +453,10 @@ Idexpr          :
                     {
                         yyerror("unsupported Idexpr (Realarg)");
                     }
-
+// --完成--
 Literal         : NUM
                     {
-                        Constant * p_constant = new Constant($1, yylineno);
-                        $$ = p_constant;
-                        cout << $$ << endl;
+                        $$ = new Constant($1, yylineno);
                         yyerror("unsupported Literal");
                     }
 
@@ -535,9 +473,10 @@ Realargs        :
                     {
                         yyerror("unsupported Realargs");
                     }
-
+// --完成--
 Arg             : Expr
                     {
+                        $$ = $1;
                         yyerror("unsupported Arg");
                     }
 %%

@@ -25,6 +25,9 @@ $(DIR_TARGET)/lexer.o: lexer.cpp lexer.h
 $(DIR_TARGET)/parser.o: parser.cpp parser.hpp lexer.h
 	g++ $(CFLAGS) -c -o $@ parser.cpp
 
+$(DIR_TARGET)/helper.o: helper.cpp helper.h
+	g++ $(CFLAGS) -c -o $@ helper.cpp
+
 $(DIR_TARGET)/%.o: $(DIR_TABLE)/%.cpp
 	g++ $(CFLAGS) -c -o $@ $<
 
@@ -34,8 +37,8 @@ $(DIR_TARGET)/%.o: $(DIR_TREE)/%.cpp
 $(DIR_TARGET)/main.o: main.cpp lexer.h parser.hpp
 	g++ $(CFLAGS) -c -o $@ main.cpp
 
-compiler_haotian: $(DIR_TARGET)/lexer.o $(DIR_TARGET)/parser.o $(DIR_TARGET)/main.o
-	g++ $(CFLAGS) -o $@ $(DIR_TARGET)/main.o $(DIR_TARGET)/lexer.o $(DIR_TARGET)/parser.o $(TARGET_TABLE) $(TARGET_TREE)
+compiler_haotian: $(DIR_TARGET)/lexer.o $(DIR_TARGET)/parser.o $(DIR_TARGET)/helper.o $(DIR_TARGET)/main.o
+	g++ $(CFLAGS) -o $@ $(DIR_TARGET)/main.o $(DIR_TARGET)/lexer.o $(DIR_TARGET)/parser.o $(DIR_TARGET)/helper.o $(TARGET_TABLE) $(TARGET_TREE)
 #	g++ $(CFLAGS) -o $@ $(DIR_TARGET)/main.o $(DIR_TARGET)/lexer.o $(DIR_TARGET)/parser.o $(TARGET_TABLE)
 
 clean:
@@ -43,6 +46,9 @@ clean:
 	rm -f lexer.cpp lexer.h
 	rm -f parser.cpp parser.hpp
 	rm -f compiler_haotian
+	find . -name "*.dot"  | xargs rm -f
+	find . -name "*.png"  | xargs rm -f
+	find . -name "*_symbol_table.txt"  | xargs rm -f
 
 tmpclean:
 	rm -rf $(DIR_TARGET)/*.o
