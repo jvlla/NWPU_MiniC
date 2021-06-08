@@ -287,18 +287,6 @@ Expr            : Assexpr
 // --完成-- 可能
 Assexpr         : Orexpr Asstail
                     {
-                        // if ($1 != NULL && $2 != NULL)
-                        // {
-                        //     Operator * p_operator = new Operator("=");
-                        //     Op * p_op = new Op($1, $2, p_operator, yylineno);
-                        //     $$ = p_op;
-                        // }
-                        // else if ($1 != NULL && $2 == NULL)
-                        //     $$ = $1;
-                        // else if ($1 == NULL && $2 != NULL)
-                        //     yyerror("the left of = is blank");
-                        // else
-                        //     $$ = NULL;
                         $$ = node_struct($1, $2, yylineno);
                         yyerror("unsupported Assexpr");
                     };
@@ -349,12 +337,12 @@ Cmptail         :   { $$ = NULL; }
                         yyerror("unsupported Cmptail");
                     };
 // --完成--
-Cmps            : GE { $$ = new Operator(">="); }
-                | '>' { $$ = new Operator(">"); } 
-                | '<' { $$ = new Operator("<"); } 
-                | LE { $$ = new Operator("<="); }
-                | EQ { $$ = new Operator("=="); }
-                | NE { $$ = new Operator("!="); }
+Cmps            : '>' { $$ = new Operator(Operator::BINARY_GREATER); } 
+                | '<' { $$ = new Operator(Operator::BINARY_LESS); } 
+                | GE { $$ = new Operator(Operator::BINARY_GREATER_EQUAL); }
+                | LE { $$ = new Operator(Operator::BINARY_LESS_EQUAL); }
+                | EQ { $$ = new Operator(Operator::BINARY_EQUAL); }
+                | NE { $$ = new Operator(Operator::BINARY_NOT_EQUAL); }
 // --完成--
 Aloexpr         : Item Alotail
                     {
@@ -373,8 +361,8 @@ Alotail         :   { $$ = NULL; }
                     };
 // --完成--
 // 之后这些应该就是用来算数的了
-Addsub          : '+' { $$ = new Operator("+"); }
-                | '-' { $$ = new Operator("-"); };
+Addsub          : '+' { $$ = new Operator(Operator::BINARY_ADD); }
+                | '-' { $$ = new Operator(Operator::BINARY_SUB); };
 // --完成--
 Item            : Factor Itemtail
                     {
@@ -392,8 +380,8 @@ Itemtail        :   { $$ = NULL; }
                         yyerror("unsupported Itemtail");
                     };
 // --完成--
-Muldiv          : '*' { $$ = new Operator("*"); }
-                | '/' { $$ = new Operator("/"); };
+Muldiv          : '*' { $$ = new Operator(Operator::BINARY_MUL); }
+                | '/' { $$ = new Operator(Operator::BINARY_DIV); };
 // --完成--
 Factor          : Lop Factor
                     {
@@ -406,12 +394,14 @@ Factor          : Lop Factor
                         yyerror("unsupported Factor Val");
                     }
 // --完成--
-Lop             : '!' { $$ = new Operator("!"); }
-                | '-' { $$ = new Operator("-"); }
-                | '&' { $$ = new Operator("&"); }
-                | '*' { $$ = new Operator("*"); }  // 这个应该是解引用符号吧，回头要注意
-                | INCR { $$ = new Operator("++"); } 
-                | DECR { $$ = new Operator("--"); };
+Lop             : '!' { $$ = new Operator(Operator::UNARY_NOT); 
+    cout << "here" << endl;}
+    
+                | '-' { $$ = new Operator(Operator::UNARY_MINUS); }
+                | '&' { $$ = new Operator(Operator::UNARY_ADDRESS); }
+                | '*' { $$ = new Operator(Operator::UNARY_INDIRECTION); }  // 这个应该是解引用符号吧，回头要注意
+                | INCR { $$ = new Operator(Operator::UNARY_INCR); } 
+                | DECR { $$ = new Operator(Operator::UNARY_DECR); };
 // --完成--
 Val             : Elem
                     {
@@ -424,8 +414,8 @@ Val             : Elem
                         yyerror("unsupported Val Rop");
                     }
 // --完成--
-Rop             : INCR { $$ = new Operator("++"); }
-                | DECR { $$ = new Operator("--"); };
+Rop             : INCR { $$ = new Operator(Operator::UNARY_INCR); }
+                | DECR { $$ = new Operator(Operator::UNARY_DECR); };
 
 Elem            : IDENT Idexpr
                     {

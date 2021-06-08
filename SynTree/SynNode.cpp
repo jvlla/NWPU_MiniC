@@ -1,13 +1,21 @@
 #include "SynNode.h"
 
 long SynNode::s_count_ = 0;
+long SynNode::s_label_ = 0;
 
-SynNode::SynNode(int line)
+SynNode::SynNode(int line, SynNode::node_type_set node_type)
 {
     this->count_ = s_count_;
     s_count_++;
     this->p_prev_ = NULL;
     this->line_ = line;
+    this->node_type_ = node_type;
+}
+
+// 设置当前节点前驱，每次创建新的更高级节点必须调用
+void SynNode::set_prev(SynNode * p_prev)
+{
+    this->p_prev_ = p_prev;
 }
 
 void SynNode::gen_graph(std::ofstream * p_fout) const
@@ -16,10 +24,9 @@ void SynNode::gen_graph(std::ofstream * p_fout) const
     this->emit_link(p_fout);  // 把自己和前驱连起来
 }
 
-// 设置当前节点前驱，每次创建新的更高级节点必须调用
-void SynNode::set_prev(SynNode * p_prev)
+SynNode::node_type_set SynNode::get_node_type()
 {
-    this->p_prev_ = p_prev;
+    return this->node_type_;
 }
 
 // 被gen_graph()调用，产生图中节点连线
@@ -40,4 +47,9 @@ void SynNode::emit_node(std::ofstream * p_fout) const
 std::string SynNode::get_node_name() const
 {
     return "N" + std::to_string(this->count_);
+}
+
+long SynNode::get_new_label() const
+{
+    return s_label_++;
 }

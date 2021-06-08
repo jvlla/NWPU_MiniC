@@ -15,12 +15,16 @@ class Variable: public Terminal
     Variable(std::string name, int * limit, SymTable * p_sym_table, int line);
     // 输出用于产生图的dot文件
     virtual void gen_graph(std::ofstream * p_fout) const;
+    // 并不输出四元式，只返回Terminal指针
+    virtual const Terminal * gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const;
+    // 返回变量的string表示，为名字name_
+    virtual std::string to_string() const;
   protected:
     // 被emit_node()调用，返回可以在图中以文字显示的节点内容
     virtual std::string get_node_content() const;
   private:
-    std::string name_;
-    Type * p_type_;
+    std::string name_;  // 变量名
+    Type * p_type_;  // 变量类型
 };
 
 #endif

@@ -14,6 +14,8 @@ class Block: public SynNode
     void set_content(std::string content);
     // 输出用于产生图的dot文件
     virtual void gen_graph(std::ofstream * p_fout) const;
+    // 用于产生四元式的函数，每个节点依次递归调用，进行深度优先遍
+    virtual const Terminal * gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const;
   protected:
     virtual std::string get_node_content() const;
   private:

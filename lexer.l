@@ -31,7 +31,7 @@ white_line  \n|\r\n
 "return"        { return RETURN; }
  /* 赋值等号 */
 "="             { 
-                    yylval.p_operator = new Operator("=");
+                    yylval.p_operator = new Operator(Operator::BINARY_ASSIGN);
                     return '='; 
                 }
  /* 类型 */
@@ -39,11 +39,11 @@ white_line  \n|\r\n
 "void"          { return VOID; }
  /* 双目逻辑运算符 */
 "||"            { 
-                    yylval.p_operator = new Operator("||");
+                    yylval.p_operator = new Operator(Operator::BINARY_OR);
                     return OR; 
                 }
 "&&"            { 
-                    yylval.p_operator = new Operator("&&");
+                    yylval.p_operator = new Operator(Operator::BINARY_AND);
                     return AND; 
                 }
 ">="            { return GE; }

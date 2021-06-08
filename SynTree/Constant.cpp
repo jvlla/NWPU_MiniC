@@ -1,6 +1,6 @@
 #include "Constant.h"
 
-Constant::Constant(int value, int line): Terminal(line)
+Constant::Constant(int value, int line): Terminal(line, SynNode::CONSTANT)
 {
     this->value_ = value;
 }
@@ -9,6 +9,16 @@ Constant::Constant(int value, int line): Terminal(line)
 void Constant::gen_graph(std::ofstream * p_fout) const
 {
     Terminal::gen_graph(p_fout);
+}
+
+const Terminal * Constant::gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const
+{
+    return this;
+}
+
+std::string Constant::to_string() const
+{
+    return std::to_string(this->value_);
 }
 
 // 被emit_node()调用，返回可以在图中以文字显示的节点内容

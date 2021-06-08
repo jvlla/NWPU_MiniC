@@ -1,6 +1,6 @@
 #include "Variable.h"
 
-Variable::Variable(std::string name, SymTable * p_sym_table, int line): Terminal(line)
+Variable::Variable(std::string name, SymTable * p_sym_table, int line): Terminal(line, SynNode::VARIABLE)
 {
     // if (!p_sym_table->isExist(name))
     //     throw new SynTreeException("undefined variable " + name);
@@ -10,7 +10,7 @@ Variable::Variable(std::string name, SymTable * p_sym_table, int line): Terminal
     // this->p_type_ = p_type;
 }
 
-Variable::Variable(std::string name, int * limit, SymTable * p_sym_table, int line): Terminal(line)
+Variable::Variable(std::string name, int * limit, SymTable * p_sym_table, int line): Terminal(line, VARIABLE)
 {
     // if (!p_sym_table->isExist(name))
     //     throw new SynTreeException("undefined variable " + name);
@@ -26,6 +26,16 @@ Variable::Variable(std::string name, int * limit, SymTable * p_sym_table, int li
 void Variable::gen_graph(std::ofstream * p_fout) const
 {
     Terminal::gen_graph(p_fout);
+}
+
+const Terminal * Variable::gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const
+{
+    return this;
+}
+
+std::string Variable::to_string() const
+{
+    return this->name_;
 }
 
 std::string Variable::get_node_content() const

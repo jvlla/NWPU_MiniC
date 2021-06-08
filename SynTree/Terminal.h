@@ -6,16 +6,16 @@ class Terminal: public SynNode
 {
   public:
     // 这个因为都是叶子节点，所以构造时也就没有子节点不需要设置前驱了
-    Terminal(int line);
+    Terminal(int line, SynNode::node_type_set node_type);
     // 输出用于产生图的dot文件
     virtual void gen_graph(std::ofstream * p_fout) const;
-    // virtual void gen_ir(int label_in, int label_out) const = 0;
+    // 用于产生四元式的函数，每个节点依次递归调用，进行深度优先遍
+    virtual const Terminal * gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const = 0;
+    // 返回各种变量、常量和临时变量的string表示
+    virtual std::string to_string() const = 0;
   protected:
     // 被emit_node()调用，返回可以在图中以文字显示的节点内容
     virtual std::string get_node_content() const = 0;
-  private:
-    static long s_temp_count_;  // 翻译临时变量唯一id
-    long temp_count_;
 };
 
 #endif

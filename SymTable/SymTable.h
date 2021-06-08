@@ -4,6 +4,7 @@
 #include <vector>
 #include "Type.h"
 
+// 用于符号表记录，记录符号唯一id，名字，类型和定义行号
 class SymTable
 {
   public:
