@@ -1,5 +1,4 @@
 #include "SymTableException.h"
-#include <string>
 
 SymTableException::SymTableException(std::string message)
 {

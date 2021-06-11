@@ -1,13 +1,19 @@
 #include "Block.h"
 #include <iostream>
 
-Block::Block(int line): SynNode(line, SynNode::BLOCK) {}
+Block::Block(int line): SynNode(line, SynNode::BLOCK)
+{
+    this->is_func_ = false;
+}
 
 // 添加同一block下的其它语句、函数等
 void Block::add_sub_program(SynNode * p_sub_program)
 {
-    this->sub_programs_.push_back(p_sub_program);
-    p_sub_program->set_prev(this);
+    if (p_sub_program != NULL)
+    {
+        this->sub_programs_.push_back(p_sub_program);
+        p_sub_program->set_prev(this);
+    }
 }
 
 // 设置图中节点内容，用在最开始写root，ifelse真假情况中间
@@ -16,14 +22,16 @@ void Block::set_content(std::string content)
     this->content_ = content;
 }
 
+void Block::set_func()
+{
+    this->is_func_ = true;
+}
+
 void Block::gen_graph(std::ofstream * p_fout) const
 {
     SynNode::gen_graph(p_fout);
     for (int i = 0; i < this->sub_programs_.size(); i++)
     {
-        // std::cout << std::to_string(i) << std::endl;
-        // std::cout << "gen graph in root block" << std::endl;
-        // std::cout << (this->sub_programs_)[i]->get_node_type() << std::endl;
         (this->sub_programs_)[i]->gen_graph(p_fout);
     }
 }
@@ -44,5 +52,8 @@ const Terminal * Block::gen_ir(int label_in, int label_out, QuadTable * p_quad_t
 
 std::string Block::get_node_content() const
 {
-    return this->content_;
+    if ((this->is_func_))
+        return "Function " + this->content_;
+    else
+        return this->content_;
 }

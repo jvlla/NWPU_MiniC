@@ -60,9 +60,32 @@ Type * SymTable::get_p_type(std::string name)
 
 void SymTable::gen_table(std::ofstream * p_fout)
 {
-    *p_fout << "ID\tTOKEN\tLINE" << std::endl;
+    std::string type;
+
+    *p_fout << "ID\tTOKEN\tTYPE\t\tLINE" << std::endl;
     for (int i = 0; i < this->elems.size(); i++)
     {
-        *p_fout << elems[i].id << "\t" << elems[i].name << "\t" << elems[i].line << std::endl;
+        switch(elems[i].p_type->get_type())
+        {
+            case Type::INT:
+                type = "int\t\t"; 
+                break;
+            case Type::VOID:
+                type = "void\t\t";  
+                break;
+            case Type::ARRAY:
+                type = "int array\t"; 
+                break;
+            case Type::FUNC_INT:
+                type = "int function\t"; 
+                break;
+            case Type::FUNC_VOID:
+                type = "void function\t";
+                break;
+            default:
+                type = "\t";
+        }
+
+        *p_fout << elems[i].id << "\t" << elems[i].name << "\t" << type << elems[i].line << std::endl;
     }
 }

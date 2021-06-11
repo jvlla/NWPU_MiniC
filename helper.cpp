@@ -1,5 +1,6 @@
 #include "helper.h"
 #include "SynTree/Op.h"
+#include "ParserException.h"
 
 struct operator_node * operator_node_struct
     (Operator * p_operator, SynNode * p_node, struct operator_node * p_struct, int line)

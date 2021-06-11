@@ -1,1 +1,7 @@
-a = b && c
+int g,h,i;
+void a()
+{
+g=1+2;
+h=i*g;
+}
+void b(){}

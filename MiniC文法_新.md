@@ -15,6 +15,7 @@ G[<program>]:
 <onepara> → <type> <paradata>
 <paradata> → '*' ident | ident <paradatatail>
 <paradatatail> → '[' ']' { '[' num ']' } | { '[' num ']' }
+
 <subprogram> → { <onestatement> }
 <onestatement> -> <localdef> | <statement>
 <localdef> → <type> <defdata> <deflist>

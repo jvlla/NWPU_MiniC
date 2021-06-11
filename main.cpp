@@ -47,23 +47,31 @@ int main(int argc, char *argv[])
     sym_table_name = file_name_path + "_symbol_table.txt";
     dot_name = file_name_path + ".dot";
     graph_name = file_name_path + ".png";
-    quad_table_name = file_name_path + "_quad_table.txt";
+    quad_table_name = file_name_path + "_quad.txt";
     // 打开输出文件
     sym_table_stream.open(sym_table_name);
     graph_stream.open(dot_name);
     quad_table_stream.open(quad_table_name);
 
-    // 进行语法分析，生成抽象语法树
-    yyparse();
-    // 输出符号表、语法树和中间表达式
-    sym_table.gen_table(&sym_table_stream);
-    syn_tree.gen_graph(&graph_stream, file_name);
-    syn_tree.gen_ir(&quad_table);
-    // quad_table.add("a", "b", "c", "d");
-    quad_table.export_to_file(&quad_table_stream);
-    // 使用graphviz生成树
-    command = "dot -Efontname=\"Microsoft Yahei\" -Tpng -o " + graph_name + " " + dot_name;
-    system((char*)command.c_str());
+    try
+    {
+        // 进行语法分析，生成抽象语法树
+        yyparse();
+        // 输出符号表、语法树和中间表达式
+        sym_table.gen_table(&sym_table_stream);
+        syn_tree.gen_graph(&graph_stream, file_name);
+        syn_tree.gen_ir(&quad_table);
+        // quad_table.add("a", "b", "c", "d");
+        quad_table.export_to_file(&quad_table_stream);
+        // 使用graphviz生成树
+        command = "dot -Efontname=\"Microsoft Yahei\" -Tpng -o " + graph_name + " " + dot_name;
+        system((char*)command.c_str());
+    }
+    catch(const exception& e)
+    {
+        cout << "here30" << endl;
+        cerr << e.what() << '\n';
+    }
 
     return 0;
 }

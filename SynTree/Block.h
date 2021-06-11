@@ -12,6 +12,8 @@ class Block: public SynNode
     void add_sub_program(SynNode * p_sub_program);
     // 设置图中节点内容，用在最开始写root，ifelse真假情况中间
     void set_content(std::string content);
+    // 设置Block节点为函数体，在之后以进行不同翻译
+    void set_func();
     // 输出用于产生图的dot文件
     virtual void gen_graph(std::ofstream * p_fout) const;
     // 用于产生四元式的函数，每个节点依次递归调用，进行深度优先遍
@@ -21,6 +23,7 @@ class Block: public SynNode
   private:
     std::vector<SynNode *> sub_programs_;
     std::string content_;
+    bool is_func_;  // 用于判断是否为函数体并用于之后进行翻译
 };
 
 #endif
