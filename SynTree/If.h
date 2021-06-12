@@ -9,7 +9,7 @@ class If: public Stmt
 {
   public:
     If(SynNode * p_condition, Block * p_statement, Else * p_else, int line);
-    void gen_graph(std::ofstream * p_fout) const;
+    virtual void gen_graph(std::ofstream * p_fout) const;
     virtual const Terminal * gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const;
   protected:
     // 被emit_node()调用，返回可以在图中以文字显示的节点内容

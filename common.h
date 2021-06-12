@@ -25,6 +25,9 @@
 #include "SynTree/Stmt.h"
 #include "SynTree/If.h"
 #include "SynTree/Else.h"
+#include "SynTree/While.h"
+#include "SynTree/Break.h"
+#include "SynTree/Continue.h"
 #include "SynTree/SynTreeException.h"
 
 #include "ParserException.h"

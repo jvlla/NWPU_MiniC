@@ -38,17 +38,18 @@ const Terminal * If::gen_ir(int label_in, int label_out, QuadTable * p_quad_tabl
         // 当真假条件共存时需要三个label
         for (int i = 0; i < 3; i++)
             label[i] = SynNode::get_new_label();
+        // 翻译见曾老师PPT Ch05-4 P4
         terminal_condition = this->p_condition_->gen_ir(label_in, label_out, p_quad_table);
         condition = terminal_condition->to_string();
         p_quad_table->add("JNZ", condition, "", "L" + std::to_string(label[0]));
         p_quad_table->add_jump_label(label[1]);
         p_quad_table->add_label(label[0]);
-        // 真条件进入label为label[0]，出label为label[2]
-        terminal_true = this->p_statement_->gen_ir(label[0], label[2], p_quad_table);
+        // if条件并不能改变出入label，因为break或continue后跳转还是根据while的label的
+        terminal_true = this->p_statement_->gen_ir(label_in, label_out, p_quad_table);
         p_quad_table->add_jump_label(label[2]);
         p_quad_table->add_label(label[1]);
-        // 假条件进入label为label[0]，出label为label[2]
-        terminal_false = this->p_statement_->gen_ir(label[1], label[2], p_quad_table);
+        // if条件并不能改变出入label，因为break或continue后跳转还是根据while的label的
+        terminal_false = this->p_statement_->gen_ir(label_in, label_out, p_quad_table);
         p_quad_table->add_label(label[2]);
     }
     else
@@ -61,8 +62,8 @@ const Terminal * If::gen_ir(int label_in, int label_out, QuadTable * p_quad_tabl
         p_quad_table->add("JNZ", condition, "", "L" + std::to_string(label[0]));
         p_quad_table->add_jump_label(label[1]);
         p_quad_table->add_label(label[0]);
-        // 当只有真条件时，真条件进入label为label[0]，出label为label[1]
-        terminal_true = this->p_statement_->gen_ir(label[0], label[1], p_quad_table);
+        // if条件并不能改变出入label，因为break或continue后跳转还是根据while的label的
+        terminal_true = this->p_statement_->gen_ir(label_in, label_out, p_quad_table);
         p_quad_table->add_label(label[1]);
     }
     

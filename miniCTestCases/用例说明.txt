@@ -1,0 +1,5 @@
+测试用例分为四部分:基础功能点检查用例（Basic function point check use cases）、可选功能点检查用例（Optional function point check use cases）、附加功能点检查用例（Additional function point check use cases）、错误功能点测试用例（Error function point test cases）
+测试用例应当作为编译器的输入，根据不同的测试用例有正确的输出
+    对于基础功能点检查用例、可选功能点检查用例、附加功能点检查用例，程序应当输出正确的四元式、符号表、抽象语法树、控制流图
+    对于错误功能点测试用例，程序应当报错，此时不应再输出四元式、符号表、抽象语法树、控制流图
+

@@ -1,11 +1,13 @@
 int main()
 {
     int a,b,c,d;
-    a = 1;
-    if (a > 2)
+    
+    a = b=0;
+    while(a < 5)
     {
-        b = 10;
+        a++;
+        b--;
+        break;
+        continue;
     }
-    else
-        b = 20;
 }

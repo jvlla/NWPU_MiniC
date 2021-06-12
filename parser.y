@@ -518,13 +518,17 @@ Statement       : Whilestat
                         parser_tracker("Statement Emptystat");
                     };
 
+// --完成--
 Breakstat       : BREAK ';'
                     {
+                        $$ = new Break(yylineno);
                         parser_tracker("Breakstat");
                     };
 
+// --完成--
 Continuestat    : CONTINUE ';'
                     {
+                        $$ = new Continue(yylineno);
                         parser_tracker("Continuestat");
                     };
 
@@ -550,8 +554,19 @@ Blockstat       : '{' Subprogram '}'
 Emptystat       : ';'
                     { $$ = NULL; };
 
+// --完成--
 Whilestat       : WHILE '(' Expr ')' Statement
                     {
+                        // 当while循环语句不使用括号包裹时，即直接是语句而非Block时，需要额外套一层Block
+                        if ($5->get_node_type() != SynNode::BLOCK)
+                        {
+                            Block * p_block = new Block(yylineno);
+                            p_block->add_sub_program($5);
+                            $$ = new While($3, p_block, yylineno);
+                        }
+                        else
+                            $$ = new While($3, (Block *) $5, yylineno);
+                        
                         parser_tracker("Whilestat");
                     };
 
