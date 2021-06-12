@@ -1,6 +1,6 @@
 #include "helper.h"
-#include "SynTree/Op.h"
-#include "ParserException.h"
+
+extern int yylineno;
 
 struct operator_node * operator_node_struct
     (Operator * p_operator, SynNode * p_node, struct operator_node * p_struct, int line)
@@ -35,4 +35,11 @@ SynNode * node_struct(SynNode * p_node, struct operator_node * p_struct, int lin
         p_ret_node = p_node;
 
     return p_ret_node;
+}
+
+void parser_tracker(std::string message)
+{
+#ifdef DEBUG
+    std::cout << "Line(" << yylineno << "): " << message << std::endl;
+#endif
 }

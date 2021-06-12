@@ -3,7 +3,6 @@
 #include "lexer.h"
 #include "parser.hpp"
 #include "helper.h"
-#include "ParserException.h"
 
 using namespace std;
 
@@ -24,6 +23,8 @@ extern SynTree syn_tree;
     Operator * p_operator;
     struct def * p_def;  // 传递函数、变量声明结构体
     struct def_vars * p_def_vars;  // 传递变量声明结构体
+    If * p_if;
+    Else * p_else;
 };
 
 /* 每行下面的注释是这些终结符代表的意思 */
@@ -53,12 +54,14 @@ extern SynTree syn_tree;
 %type<p_block> Functail Blockstat 
 /* 函数内部 */
 %type<p_block> Subprogram
-%type<p_node> Localdef
+%type<p_def_vars> Localdef
 %type<p_node> Onestatement
 
 %type<p_node> Vardef Para 
 %type<p_node> Oneparas Onepara Paradata Paradatatail Paradatatails 
-%type<p_node> Statement Breakstat Continuestat Returnstat Assignstat Emptystat Whilestat Ifstat Elsestat
+%type<p_node> Statement Breakstat Continuestat Returnstat Assignstat Emptystat Whilestat
+%type<p_if> Ifstat
+%type<p_else> Elsestat
 // 表达式部分
 %type<p_node> Altexpr Expr Assexpr Orexpr Andexpr Cmpexpr
 %type<p_node>  Aloexpr Item Factor Val Elem Idexpr Literal Realarg Arg Realargs
@@ -84,9 +87,8 @@ Program         : Segment
                             free($1->p_def_func);
                         }
                             
-                        cout << "here50" << endl;
                         free($1);
-                        yyerror("unsupported Program Segment");
+                        parser_tracker("Program Segment");
                     }
                 | Program Segment
                     {
@@ -103,7 +105,7 @@ Program         : Segment
                         }
                             
                         free($2);
-                        yyerror("unsupported Program Program Segment");
+                        parser_tracker("Program Program Segment");
                     };
 
 // 只考虑单个声明情况下
@@ -114,12 +116,18 @@ Segment         :  Type Def
                         {
                             struct def_vars * p_def_vars = $2->p_def_vars;
                             // 这个简化了，实际应该考虑数组Type什么的
-                            for (int i = 0; i < VARS_SIZE && p_def_vars->p_names[i] != NULL; i++)
+                            // 倒叙遍历，因为变量放的时候是从后往前的
+
+                            for (int i = VARS_SIZE - 1; i >= 0; i--)
                             {
-                                // cout << "here10" << endl;
-                                sym_table.put(p_def_vars->p_names[i], $1, yylineno);
-                                // 因为符号表put实际上是创建了新的string对象，所以可以释放
-                                free(p_def_vars->p_names[i]);
+                                cout << "here10" << endl;
+                                if (p_def_vars->p_names[i] != NULL)
+                                {
+                                    cout << "in" << endl;
+                                    sym_table.put(p_def_vars->p_names[i], $1, yylineno);
+                                    // 因为符号表put实际上是创建了新的string对象，所以可以释放
+                                    free(p_def_vars->p_names[i]);
+                                }
                             }
                             // 释放数组
                             free(p_def_vars);
@@ -137,23 +145,23 @@ Segment         :  Type Def
                         }
 
                         $$ = $2;
-                        yyerror("unsupported Segment");
+                        parser_tracker("Segment");
                     };
 
 Type            :  INT
                     {
                         $$ = new Type(Type::INT);
-                        yyerror("unsupported Type INT");
+                        parser_tracker("Type INT");
                     }
                 |  VOID
                     {
                         $$ = new Type(Type::VOID);
-                        yyerror("unsupported Type VOID");
+                        parser_tracker("Type VOID");
                     };
 
 Def             :  '*' IDENT Deflist
                     {
-                        yyerror("unsupported Def * IDENT Deflist");
+                        parser_tracker("Def * IDENT Deflist");
                     }
                 |  IDENT Idtail
                     {
@@ -179,7 +187,7 @@ Def             :  '*' IDENT Deflist
                             $2->p_def_func->name = $1;
 
                         $$ = $2;
-                        yyerror("unsupported Def IDENT Idtail");
+                        parser_tracker("Def IDENT Idtail");
                     };
 
 Deflist         :  ',' Defdata Deflist
@@ -215,7 +223,7 @@ Deflist         :  ',' Defdata Deflist
                             }
                             $$ = $3;
                         }
-                        yyerror("unsupported Deflist , Defdata Deflist");
+                        parser_tracker("Deflist , Defdata Deflist");
                     }
                 | ';' 
                     { $$ = NULL; };
@@ -225,11 +233,11 @@ Defdata         :  IDENT Vardef
                     {
                         if ($2 == NULL)
                             $$ = $1;
-                        yyerror("unsupported Defdata IDENT Vardef");
+                        parser_tracker("Defdata IDENT Vardef");
                     }
                 |  '*' IDENT
                     {
-                        yyerror("unsupported Defdata * IDENT");
+                        parser_tracker("Defdata * IDENT");
                     };
 
 Vardef          : 
@@ -239,7 +247,7 @@ Vardef          :
                     }
                 |  '[' NUM ']' Vardef  // Vardef在后面写正好递归返回构建树一样的数组
                     {
-                        yyerror("unsupported Vardef");
+                        parser_tracker("Vardef");
                     }
 
 Idtail          :  Vardef Deflist
@@ -286,7 +294,7 @@ Idtail          :  Vardef Deflist
                         }
 
                         $$ = p_def;
-                        yyerror("unsupported Idtail Vardef Deflist");
+                        parser_tracker("Idtail Vardef Deflist");
                     }
                 |  '(' Para ')' Functail
                     {
@@ -304,7 +312,7 @@ Idtail          :  Vardef Deflist
                         }
 
                         $$ = p_def;
-                        yyerror("unsupported Idtail (Para) Functail");
+                        parser_tracker("Idtail (Para) Functail");
                     }
 
 Functail        :  Blockstat
@@ -314,7 +322,7 @@ Functail        :  Blockstat
                             $1->set_func();
                         
                         $$ = $1;
-                        yyerror("unsupported Functail Blockstat");
+                        parser_tracker("Functail Blockstat");
                     }
                 |  ';'
                     { $$ = NULL; };
@@ -323,44 +331,44 @@ Para            :           // 这个可能不对
                     { $$ = NULL; }
                 | Onepara Oneparas
                     {
-                        yyerror("unsupported Para");
+                        parser_tracker("Para");
                     };
 
 Oneparas        :
                     {}
                 | ',' Onepara Oneparas
                     {
-                        yyerror("unsupported Oneparas");
+                        parser_tracker("Oneparas");
                     };
 
 Onepara         : Type Paradata
                     {
-                        yyerror("unsupported Onepara");
+                        parser_tracker("Onepara");
                     };
 
 Paradata        : '*' IDENT
                     {
-                        yyerror("unsupported Paradata * IDENT");
+                        parser_tracker("Paradata * IDENT");
                     }
                 | IDENT Paradatatail
                     {
-                        yyerror("unsupported Paradata IDENT Paradatatail");
+                        parser_tracker("Paradata IDENT Paradatatail");
                     };
 
 Paradatatail    : '[' ']' Paradatatails  // 这个可能也有问题
                     {
-                        yyerror("unsupported Paradatatail [] Paradatatails");
+                        parser_tracker("Paradatatail [] Paradatatails");
                     }
                 | Paradatatails
                     {
-                        yyerror("unsupported Paradata Paradatatails");
+                        parser_tracker("Paradata Paradatatails");
                     };
 
 Paradatatails   :
                     {}
                 | '[' NUM ']' Paradatatails
                     {
-                        yyerror("unsupported Paradatatails");
+                        parser_tracker("Paradatatails");
                     };
 
 // 以下是函数内部了
@@ -377,13 +385,18 @@ Subprogram      :
                         }
                         else
                             $$ = NULL;
+                        
+                        parser_tracker("Subprogram Onestatement");
                     }
                 | Subprogram Onestatement
                     {
                         // 当Subprogram有返回值即已经存在了Block并其中已有节点时，不需要新建节点
                         if ($1 != NULL)
+                        {
                             if ($2 != NULL)
                                 $1->add_sub_program($2);
+                            $$ = $1;
+                        }
                         else
                             // 如果有新的节点
                             if ($2 != NULL)
@@ -396,22 +409,70 @@ Subprogram      :
                                 // 如果既没有已经存在的Block，也没有新的节点，返回NULL
                                 $$ = NULL;
 
-                        yyerror("unsupported Subprogram");
+                        parser_tracker("Subprogram Subprogram Onestatement");
                     };
 
+// --完成--
 Onestatement    : Localdef 
                     {
-                        yyerror("unsupported Onestatement Localdef");
+                        $$ = NULL;
+                        parser_tracker("Onestatement Localdef");
                     }
                 | Statement
                     {
                         $$ = $1;
-                        yyerror("unsupported Onestatement Statement");
+                        parser_tracker("Onestatement Statement");
                     };
 
 Localdef        : Type Defdata Deflist
                     {
-                        yyerror("unsupported Localdef");
+                        struct def_vars * p_def_vars;
+
+                        // 如果仅有一个变量声明，仍要创建一个结构体，统一形式嘛
+                        if ($3 == NULL)
+                        {
+                            // 创建返回定义变量定义的结构体
+                            p_def_vars = new struct def_vars();
+                            // 将变量名指针数字全部初始化为NULL
+                            for (int i = 0; i < VARS_SIZE; i++)
+                                p_def_vars->p_names[i] = NULL;
+                            p_def_vars->p_names[0] = $2;
+                            $$ = p_def_vars;
+                        }
+                        // 否则已经把变量放到已经存在的结构体就好
+                        else
+                        {
+                            for (int i = 0; i < VARS_SIZE; i++)
+                            {
+                                // 如果变量声明已达到VARS_SIZE限制大小，报错抛出异常
+                                if (i == VARS_SIZE - 1 && $3->p_names[i] != NULL)
+                                    throw new ParserException(
+                                        "The number of variable eclaration exceed limit " 
+                                        + to_string(VARS_SIZE));
+                                if ($3->p_names[i] == NULL)
+                                {
+                                    $3->p_names[i] = $2;
+                                    // 放入变量名，退出循环
+                                    break;
+                                }
+                            }
+                            p_def_vars = $3;
+                        }
+
+                        for (int i = VARS_SIZE - 1; i >= 0; i--)
+                        {
+                            if (p_def_vars->p_names[i] != NULL)
+                            {
+                                sym_table.put(p_def_vars->p_names[i], $1, yylineno);
+                                // 因为符号表put实际上是创建了新的string对象，所以可以释放
+                                free(p_def_vars->p_names[i]);
+                            }
+                        }
+                        // 释放数组
+                        free(p_def_vars);
+
+                        $$ = NULL;
+                        parser_tracker("Localdef");
                     }
 
 // 语句Stmt部分
@@ -419,90 +480,103 @@ Localdef        : Type Defdata Deflist
 Statement       : Whilestat
                     {
                         $$ = $1;
-                        yyerror("unsupported Statement Whilestat");
+                        parser_tracker("Statement Whilestat");
                     }
                 | Ifstat
                     {
                         $$ = $1;
-                        yyerror("unsupported Statement Ifstat");
+                        parser_tracker("Statement Ifstat");
                     }
                 | Breakstat
                     {
                         $$ = $1;
-                        yyerror("unsupported Statement Breakstat");
+                        parser_tracker("Statement Breakstat");
                     }
                 | Continuestat
                     {
                         $$ = $1;
-                        yyerror("unsupported Statement Continuestat");
+                        parser_tracker("Statement Continuestat");
                     }
                 | Returnstat
                     {
                         $$ = $1;
-                        yyerror("unsupported Statement Returnstat");
+                        parser_tracker("Statement Returnstat");
                     }
                 | Blockstat
                     {
                         $$ = $1;
-                        yyerror("unsupported Statement Blockstat");
+                        parser_tracker("Statement Blockstat");
                     }
                 | Assignstat
                     {
                         $$ = $1;
-                        yyerror("unsupported Statement Assignstat");
+                        parser_tracker("Statement Assignstat");
                     }
                 | Emptystat
                     {
                         $$ = $1;
-                        yyerror("unsupported Statement Emptystat");
+                        parser_tracker("Statement Emptystat");
                     };
 
 Breakstat       : BREAK ';'
                     {
-                        yyerror("unsupported Breakstat");
+                        parser_tracker("Breakstat");
                     };
 
 Continuestat    : CONTINUE ';'
                     {
-                        yyerror("unsupported Continuestat");
+                        parser_tracker("Continuestat");
                     };
 
 Returnstat      : RETURN Altexpr ';'
                     {
-                        yyerror("unsupported Returnstat");
+                        parser_tracker("Returnstat");
                     };
 
 // --完成--
 Assignstat      : Altexpr ';'
                     {
                         $$ = $1;
-                        yyerror("unsupported Assignstat");
+                        parser_tracker("Assignstat Altexpr ;");
                     };
 
 Blockstat       : '{' Subprogram '}'
                     {
                         $$ = $2;
-                        yyerror("unsupported Blockstat");
+                        parser_tracker("Blockstat Subprogram");
                     };
 
+// --完成--
 Emptystat       : ';'
-                    {};  // 这个就是什么都不干的
+                    { $$ = NULL; };
 
 Whilestat       : WHILE '(' Expr ')' Statement
                     {
-                        yyerror("unsupported Whilestat");
+                        parser_tracker("Whilestat");
                     };
 
+// --完成--
 Ifstat          : IF  '(' Expr ')' Statement Elsestat
                     {
-                        yyerror("unsupported Ifstat");
+                        // 当if真条件不使用括号包裹时，即直接是语句而非Block时，需要额外套一层Block
+                        if ($5->get_node_type() != SynNode::BLOCK)
+                        {
+                            Block * p_block = new Block(yylineno);
+                            p_block->add_sub_program($5);
+                            $$ = new If($3, p_block, $6, yylineno);
+                        }
+                        else
+                            $$ = new If($3, (Block *) $5, $6, yylineno);
+                        parser_tracker("Ifstat");
                     };
 
+// --完成--
 Elsestat        :
                     { $$ = NULL; }
                 | ELSE Statement
                     {
-                        yyerror("unsupported Elsestat");
+                        $$ = new Else($2, yylineno);
+                        parser_tracker("Elsestat");
                     };
 // --完成--
 // 表达式Expr
@@ -511,65 +585,65 @@ Altexpr         :
                 | Expr
                     {
                         $$ = $1;
-                        yyerror("unsupported Altexpr");
+                        parser_tracker("Altexpr");
                     };
 // --完成--
 Expr            : Assexpr
                     {
                         $$ = $1;
-                        yyerror("unsupported Expr");
+                        parser_tracker("Expr");
                     };
 // --完成-- 可能
 Assexpr         : Orexpr Asstail
                     {
                         $$ = node_struct($1, $2, yylineno);
-                        yyerror("unsupported Assexpr");
+                        parser_tracker("Assexpr");
                     };
 // --完成--
 Asstail         :   { $$ = NULL; }
                 | '=' Assexpr Asstail
                     {
                         $$ = operator_node_struct($1, $2, $3, yylineno);
-                        yyerror("unsupported Asstail");
+                        parser_tracker("Asstail");
                     };
 // --完成--
 Orexpr          : Andexpr Ortail
                     {
                         $$ = node_struct($1, $2, yylineno);
-                        yyerror("unsupported Orexpr");
+                        parser_tracker("Orexpr");
                     };
 // --完成--
 Ortail          :   { $$ = NULL; }
                 | OR Andexpr Ortail
                     {
                         $$ = operator_node_struct($1, $2, $3, yylineno);
-                        yyerror("unsupported Ortail");
+                        parser_tracker("Ortail");
                     };
 // --完成--
 Andexpr         : Cmpexpr Andtail
                     {
                         $$ = node_struct($1, $2, yylineno);
-                        yyerror("unsupported Andexpr");
+                        parser_tracker("Andexpr");
                     };
 // --完成--
 Andtail         :   { $$ = NULL; }
                 | AND Cmpexpr Andtail
                     {
                         $$ = operator_node_struct($1, $2, $3, yylineno);
-                        yyerror("unsupported Andexpr");
+                        parser_tracker("Andexpr");
                     };
 // --完成--
 Cmpexpr         : Aloexpr Cmptail
                     {
                         $$ = node_struct($1, $2, yylineno);
-                        yyerror("unsupported Cmpexpr");
+                        parser_tracker("Cmpexpr");
                     };
 // --完成--
 Cmptail         :   { $$ = NULL; }
                 | Cmps Aloexpr Cmptail
                     {
                         $$ = operator_node_struct($1, $2, $3, yylineno);
-                        yyerror("unsupported Cmptail");
+                        parser_tracker("Cmptail");
                     };
 // --完成--
 Cmps            : '>' { $$ = new Operator(Operator::BINARY_GREATER); } 
@@ -585,14 +659,14 @@ Aloexpr         : Item Alotail
                             $$ = new Op($1, $2->p_node, $2->p_operator, yylineno);
                         else
                             $$ = $1;
-                        yyerror("unsupported Aloexpr");
+                        parser_tracker("Aloexpr");
                     };
 // --完成--
 Alotail         :   { $$ = NULL; }
                 | Addsub Item Alotail
                     {
                         $$ = operator_node_struct($1, $2, $3, yylineno);
-                        yyerror("unsupported Alotail");
+                        parser_tracker("Alotail");
                     };
 // --完成--
 // 之后这些应该就是用来算数的了
@@ -605,14 +679,14 @@ Item            : Factor Itemtail
                             $$ = new Op($1, $2->p_node, $2->p_operator, yylineno);
                         else
                             $$ = $1;
-                        yyerror("unsupported Item");
+                        parser_tracker("Item");
                     };
 // --完成--
 Itemtail        :   { $$ = NULL; }
                 | Muldiv Factor Itemtail
                     {
                         $$ = operator_node_struct($1, $2, $3, yylineno);
-                        yyerror("unsupported Itemtail");
+                        parser_tracker("Itemtail");
                     };
 // --完成--
 Muldiv          : '*' { $$ = new Operator(Operator::BINARY_MUL); }
@@ -621,12 +695,12 @@ Muldiv          : '*' { $$ = new Operator(Operator::BINARY_MUL); }
 Factor          : Lop Factor
                     {
                         $$ = new Unary($2, $1, yylineno);
-                        yyerror("unsupported Factor Lop Factor");
+                        parser_tracker("Factor Lop Factor");
                     }
                 | Val
                     {
                         $$ = $1;
-                        yyerror("unsupported Factor Val");
+                        parser_tracker("Factor Val");
                     }
 // --完成--
 Lop             : '!' { $$ = new Operator(Operator::UNARY_NOT); }
@@ -639,12 +713,12 @@ Lop             : '!' { $$ = new Operator(Operator::UNARY_NOT); }
 Val             : Elem
                     {
                         $$ = $1;
-                        yyerror("unsupported Val Elem");
+                        parser_tracker("Val Elem");
                     }
                 | Elem Rop
                     {
                         $$ = new Unary($1, $2, yylineno);
-                        yyerror("unsupported Val Rop");
+                        parser_tracker("Val Rop");
                     }
 // --完成--
 Rop             : INCR { $$ = new Operator(Operator::UNARY_INCR); }
@@ -654,58 +728,58 @@ Elem            : IDENT Idexpr
                     {
                         if ($2 == NULL)
                             $$ = new Variable($1, &sym_table, yylineno);
-                        yyerror("unsupported Elem IDENT Idexpr");
+                        parser_tracker("Elem IDENT Idexpr");
                     }
                 | '(' Expr')'
                     {
                         $$ = $2;
-                        yyerror("unsupported Elem (Expr)");
+                        parser_tracker("Elem (Expr)");
                     }
                 | Literal 
                     { 
                         $$ = $1; 
-                        yyerror("unsupported Elem Literal"); 
+                        parser_tracker("Elem Literal"); 
                     };
 
 Idexpr          :   { $$ = NULL; }
                 | '[' Expr ']' 
                     {
-                        yyerror("unsupported Idexpr [Expr]");
+                        parser_tracker("Idexpr [Expr]");
                     }
                 | '(' Realarg ')'
                     {
-                        yyerror("unsupported Idexpr (Realarg)");
+                        parser_tracker("Idexpr (Realarg)");
                     }
 // --完成--
 Literal         : NUM
                     {
                         $$ = new Constant($1, yylineno);
-                        yyerror("unsupported Literal");
+                        parser_tracker("Literal");
                     }
 
 Realarg         :  // 这是不是也可能有问题
                     {}
                 | Arg Realargs
                     {
-                        yyerror("unsupported Realarg");
+                        parser_tracker("Realarg");
                     }
 
 Realargs        :
                     {}
                 | ',' Arg Realargs
                     {
-                        yyerror("unsupported Realargs");
+                        parser_tracker("Realargs");
                     }
 // --完成--
 Arg             : Expr
                     {
                         $$ = $1;
-                        yyerror("unsupported Arg");
+                        parser_tracker("Arg");
                     }
 %%
 
+// 其实好像不用了
 void yyerror(const char * msg)
 {
     printf("Line(%d): %s\n", yylineno, msg);
-    // exit(EXIT_FAILURE);
 }

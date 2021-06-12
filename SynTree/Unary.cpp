@@ -53,12 +53,14 @@ const Terminal * Unary::gen_ir(int label_in, int label_out, QuadTable * p_quad_t
             throw new SynTreeException("Unsupported indirection operator *");
             break;
         case Operator::UNARY_INCR:
-            // 将++自增变为+1
+            // 将++自增变为+1，并赋值
             p_quad_table->add("+", arg, "1", (Expr::get_temp_variable())->to_string());
+            p_quad_table->add("=", arg, "", (Expr::get_temp_variable())->to_string());
             break;
         case Operator::UNARY_DECR:
-            // 将--自减变为-1
+            // 将--自减变为-1，并赋值
             p_quad_table->add("-", arg, "1", (Expr::get_temp_variable())->to_string());
+            p_quad_table->add("=", arg, "", (Expr::get_temp_variable())->to_string());
             break;
         default:
             throw new SynTreeException("Illegal unary operator");

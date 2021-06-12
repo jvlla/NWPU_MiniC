@@ -52,6 +52,11 @@ int main(int argc, char *argv[])
     sym_table_stream.open(sym_table_name);
     graph_stream.open(dot_name);
     quad_table_stream.open(quad_table_name);
+    if (!sym_table_stream || !graph_stream || !quad_table_stream)
+    {
+        cerr << "Can't open needed output file." << endl;
+        exit(EXIT_FAILURE);
+    }
 
     try
     {
@@ -66,11 +71,66 @@ int main(int argc, char *argv[])
         // 使用graphviz生成树
         command = "dot -Efontname=\"Microsoft Yahei\" -Tpng -o " + graph_name + " " + dot_name;
         system((char*)command.c_str());
+
+        sym_table_stream.close();
+        graph_stream.close();
+        quad_table_stream.close();
     }
-    catch(const exception& e)
+    catch(const SymTableException * p_sym_table_exception)
     {
-        cout << "here30" << endl;
-        cerr << e.what() << '\n';
+        cerr << p_sym_table_exception->what() << endl;
+        cerr << "Compile Failed!!!!!!" << endl;
+        // 清除打开文件
+        sym_table_stream.close();
+        graph_stream.close();
+        quad_table_stream.close();
+        remove(sym_table_name.c_str());
+        remove(dot_name.c_str());
+        remove(quad_table_name.c_str());
+
+        exit(EXIT_FAILURE);
+    }
+    catch(const SynTreeException * p_syn_tree_exception)
+    {
+        cerr << p_syn_tree_exception->what() << endl;
+        cerr << "Compile Failed!!!!!!" << endl;
+        // 清除打开文件
+        sym_table_stream.close();
+        graph_stream.close();
+        quad_table_stream.close();
+        remove(sym_table_name.c_str());
+        remove(dot_name.c_str());
+        remove(quad_table_name.c_str());
+
+        exit(EXIT_FAILURE);
+    }
+    catch(const ParserException * p_parser_exception)
+    {
+        cerr << p_parser_exception->what() << endl;
+        cerr << "Compile Failed!!!!!!" << endl;
+        // 清除打开文件
+        sym_table_stream.close();
+        graph_stream.close();
+        quad_table_stream.close();
+        remove(sym_table_name.c_str());
+        remove(dot_name.c_str());
+        remove(quad_table_name.c_str());
+
+        exit(EXIT_FAILURE);
+    }
+    catch(const LexerException * p_lexer_exception)
+    {
+        cerr << p_lexer_exception->what() << endl;
+        cerr << "Compile Failed!!!!!!" << endl;
+        // 清除打开文件
+        sym_table_stream.close();
+        graph_stream.close();
+        quad_table_stream.close();
+        remove(sym_table_name.c_str());
+        remove(dot_name.c_str());
+        remove(quad_table_name.c_str());
+
+        exit(EXIT_FAILURE);
     }
 
     return 0;

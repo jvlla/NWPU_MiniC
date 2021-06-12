@@ -1,7 +1,11 @@
-int g,h,i;
-void a()
+int main()
 {
-g=1+2;
-h=i*g;
+    int a,b,c,d;
+    a = 1;
+    if (a > 2)
+    {
+        b = 10;
+    }
+    else
+        b = 20;
 }
-void b(){}

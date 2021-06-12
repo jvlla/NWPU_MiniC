@@ -92,7 +92,7 @@ white_line  \n|\r\n
 {white_line}    {}
 
 .               {
-                    cout << "Invalid char " << yytext << endl;
-                    return ERRORCHAR;
+                    // cout << "Line(" << yylineno <<"): Invalid char " << yytext << endl;
+                    throw new LexerException("Line(" + to_string(yylineno) + "): Invalid char " + yytext);
                 }
 %%

@@ -3,12 +3,7 @@
  * 关键是用完了要free！！！！！！ （当然了其实不free也无所谓，但指针new是必须的）
  * 然后每个结构体里面的指向数组的指针都要全部初始化为NULL或-1！！！！！！ 非常重要，保证后续判断的正确性
  */
-#include <string>
-#include "SymTable/Func.h"
-#include "SynTree/SynNode.h"
-#include "SynTree/Operator.h"
-#include "SynTree/Block.h"
-#include "SynTree/Op.h"
+#include "common.h"
 
 // 已经在SymTable/Type.h里面定义过了，所以就不再定义
 // #define PARMAS_SIZE 10  // 函数最多有10个参数
@@ -55,3 +50,5 @@ struct operator_node * operator_node_struct
 // 接收指向SynNode, 结构体的指针和行号，返回指向Op的指针
 // 类似 a + b 这样，所以最后可以归约为一个Op节点
 SynNode * node_struct(SynNode * p_node, struct operator_node * p_struct, int line);
+
+void parser_tracker(std::string message);

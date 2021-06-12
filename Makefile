@@ -34,6 +34,9 @@ $(DIR_TARGET)/helper.o: helper.cpp helper.h
 $(DIR_TARGET)/ParserException.o: ParserException.cpp ParserException.h
 	g++ $(CFLAGS) -c -o $@ ParserException.cpp
 
+$(DIR_TARGET)/LexerException.o: LexerException.cpp LexerException.h
+	g++ $(CFLAGS) -c -o $@ LexerException.cpp
+
 $(DIR_TARGET)/%.o: $(DIR_TABLE)/%.cpp
 	g++ $(CFLAGS) -c -o $@ $<
 
@@ -44,9 +47,11 @@ $(DIR_TARGET)/main.o: main.cpp lexer.h parser.hpp
 	g++ $(CFLAGS) -c -o $@ main.cpp
 
 compiler_haotian: $(DIR_TARGET)/lexer.o $(DIR_TARGET)/parser.o $(DIR_TARGET)/QuadTable.o \
-	$(DIR_TARGET)/helper.o $(DIR_TARGET)/ParserException.o $(DIR_TARGET)/main.o
+	$(DIR_TARGET)/helper.o $(DIR_TARGET)/ParserException.o $(DIR_TARGET)/LexerException.o \
+	$(DIR_TARGET)/main.o
 	g++ $(CFLAGS) -o $@ $(DIR_TARGET)/main.o $(DIR_TARGET)/lexer.o $(DIR_TARGET)/parser.o \
-		$(DIR_TARGET)/QuadTable.o $(DIR_TARGET)/helper.o $(DIR_TARGET)/ParserException.o \
+		$(DIR_TARGET)/QuadTable.o $(DIR_TARGET)/helper.o \
+		$(DIR_TARGET)/ParserException.o $(DIR_TARGET)/LexerException.o \
 		$(TARGET_TABLE) $(TARGET_TREE)
 
 clean:

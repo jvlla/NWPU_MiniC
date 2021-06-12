@@ -13,7 +13,7 @@ class SynNode
   public:
     // 存储节点类型的枚举类型，用于get_node_type()返回
     enum node_type_set {EXPR, OP, UNARY, TERMINAL, VARIABLE, CONSTANT, TEMP_VARIABLE,
-        BLOCK};
+        BLOCK, STMT, IF, ELSE, WHILE, BREAK, CONTINUE};
 
     // 注意，每个构造函数都要调用传递过来的节点的set_prev()函数设定前驱
     SynNode(int line, node_type_set node_type);

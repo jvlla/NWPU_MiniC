@@ -13,7 +13,7 @@ class Op: public Expr
     virtual const Terminal * gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const;
   protected:
     // 被emit_node()调用，返回可以在图中以文字显示的节点内容
-    std::string get_node_content() const;
+    virtual std::string get_node_content() const;
   private:
     SynNode * p_first_, * p_second_;
     Operator * p_operator_;
