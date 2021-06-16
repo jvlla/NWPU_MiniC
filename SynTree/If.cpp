@@ -27,7 +27,8 @@ void If::gen_graph(std::ofstream * p_fout) const
         this->p_else_->gen_graph(p_fout);
 }
 
-const Terminal * If::gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const
+const Terminal * If::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
+    QuadTable * p_quad_table) const
 {
     long label[3];
     const Terminal * terminal_condition, * terminal_true, * terminal_false;
@@ -39,17 +40,20 @@ const Terminal * If::gen_ir(int label_in, int label_out, QuadTable * p_quad_tabl
         for (int i = 0; i < 3; i++)
             label[i] = SynNode::get_new_label();
         // 翻译见曾老师PPT Ch05-4 P4
-        terminal_condition = this->p_condition_->gen_ir(label_in, label_out, p_quad_table);
+        terminal_condition = 
+            this->p_condition_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
         condition = terminal_condition->to_string();
         p_quad_table->add("JNZ", condition, "", "L" + std::to_string(label[0]));
         p_quad_table->add_jump_label(label[1]);
         p_quad_table->add_label(label[0]);
         // if条件并不能改变出入label，因为break或continue后跳转还是根据while的label的
-        terminal_true = this->p_statement_->gen_ir(label_in, label_out, p_quad_table);
+        terminal_true = 
+            this->p_statement_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
         p_quad_table->add_jump_label(label[2]);
         p_quad_table->add_label(label[1]);
         // if条件并不能改变出入label，因为break或continue后跳转还是根据while的label的
-        terminal_false = this->p_statement_->gen_ir(label_in, label_out, p_quad_table);
+        terminal_false = 
+            this->p_statement_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
         p_quad_table->add_label(label[2]);
     }
     else
@@ -57,13 +61,15 @@ const Terminal * If::gen_ir(int label_in, int label_out, QuadTable * p_quad_tabl
         // 当只有真条件时，只需两个label
         for (int i = 0; i < 2; i++)
             label[i] = SynNode::get_new_label();
-        terminal_condition = this->p_condition_->gen_ir(label_in, label_out, p_quad_table);
+        terminal_condition = 
+            this->p_condition_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
         condition = terminal_condition->to_string();
         p_quad_table->add("JNZ", condition, "", "L" + std::to_string(label[0]));
         p_quad_table->add_jump_label(label[1]);
         p_quad_table->add_label(label[0]);
         // if条件并不能改变出入label，因为break或continue后跳转还是根据while的label的
-        terminal_true = this->p_statement_->gen_ir(label_in, label_out, p_quad_table);
+        terminal_true = 
+            this->p_statement_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
         p_quad_table->add_label(label[1]);
     }
     

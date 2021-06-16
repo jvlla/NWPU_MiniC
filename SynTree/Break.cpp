@@ -7,7 +7,8 @@ void Break::gen_graph(std::ofstream * p_fout) const
     Stmt::gen_graph(p_fout);
 }
 
-const Terminal * Break::gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const
+const Terminal * Break::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
+    QuadTable * p_quad_table) const
 {
     p_quad_table->add_jump_label(label_out);
     

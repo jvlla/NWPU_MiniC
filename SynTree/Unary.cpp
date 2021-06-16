@@ -15,13 +15,15 @@ void Unary::gen_graph(std::ofstream * p_fout) const
     this->p_next_->gen_graph(p_fout);
 }
 
-const Terminal * Unary::gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const
+const Terminal * Unary::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
+    QuadTable * p_quad_table) const
 {
     const Terminal * ret_terminal;  // 子节点返回对象
     std::string arg, result;  // 输出到四元式的字符串
 
     // 因为单目运算符不会发生用于短路求值的跳转，因此可以直接赋值不用根据Operator判断
-    ret_terminal = this->p_next_->gen_ir(label_in, label_out, p_quad_table);
+    ret_terminal = 
+        this->p_next_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
     arg = ret_terminal->to_string();
     result = Expr::get_temp_variable()->to_string();
     // 根据运算符类型决定产生四元式类型

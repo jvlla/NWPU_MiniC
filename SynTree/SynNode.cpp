@@ -49,6 +49,11 @@ std::string SynNode::get_node_name() const
     return "N" + std::to_string(this->count_);
 }
 
+void SynNode::set_node_type(node_type_set new_type)
+{
+    this->node_type_ = new_type;
+}
+
 long SynNode::get_new_label() const
 {
     return s_label_++;

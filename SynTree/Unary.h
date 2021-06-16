@@ -10,7 +10,8 @@ class Unary: public Expr
     Unary(SynNode * p_next, Operator * p_operator, int line);
     // 输出用于产生图的dot文件
     virtual void gen_graph(std::ofstream * p_fout) const;
-    virtual const Terminal * gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const;
+    virtual const Terminal * gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
+        QuadTable * p_quad_table) const;
   protected:
     // 被emit_node()调用，返回可以在图中以文字显示的节点内容
     std::string get_node_content() const;

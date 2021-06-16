@@ -28,6 +28,7 @@ struct def {
 
 // 传递函数定义结构体
 struct def_func {
+    TypeFunc * p_type_func;  // 函数类型
     char * name;  // 函数名
     int param_ids[PARAMS_SIZE];  // 符号表中形参的id号，最多10个
     Block * p_body;  // 函数体中的变量

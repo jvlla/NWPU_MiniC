@@ -1,3 +1,11 @@
+void test(int x, int y, int z)
+{
+    int g;
+g = 1;
+
+return;
+}
+
 int main()
 {
     int a,b,c,d;

@@ -21,5 +21,5 @@ void SynTree::gen_graph(std::ofstream * p_fout, std::string grahp_name)
 
 void SynTree::gen_ir(QuadTable * p_quad_table)
 {
-    this->p_block_->gen_ir(-1, -1, p_quad_table);
+    this->p_block_->gen_ir(-1, -1, -1, NULL, p_quad_table);
 }

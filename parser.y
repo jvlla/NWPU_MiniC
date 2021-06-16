@@ -25,6 +25,8 @@ extern SynTree syn_tree;
     struct def_vars * p_def_vars;  // 传递变量声明结构体
     If * p_if;
     Else * p_else;
+    int * p_params_def;  // 指向数组的指针，数组中存放的是变量声明的id
+    int id;  // 声明变量id
 };
 
 /* 每行下面的注释是这些终结符代表的意思 */
@@ -50,19 +52,24 @@ extern SynTree syn_tree;
 %type<p_type> Type
 %type<p_def_vars> Deflist
 %type<name> Defdata
+/* 函数参数 */
+%type<p_params_def> Para Oneparas
+%type<id> Onepara
+/* paradata只是暂时当作char *，假设就没有数组作为函数参数 */
+%type<name> Paradata
+%type<p_node> Paradatatail Paradatatails
 
 %type<p_block> Functail Blockstat 
 /* 函数内部 */
 %type<p_block> Subprogram
 %type<p_def_vars> Localdef
 %type<p_node> Onestatement
-
-%type<p_node> Vardef Para 
-%type<p_node> Oneparas Onepara Paradata Paradatatail Paradatatails 
+%type<p_node> Vardef 
+/* 语句部分 */
 %type<p_node> Statement Breakstat Continuestat Returnstat Assignstat Emptystat Whilestat
 %type<p_if> Ifstat
 %type<p_else> Elsestat
-// 表达式部分
+/* 表达式部分 */
 %type<p_node> Altexpr Expr Assexpr Orexpr Andexpr Cmpexpr
 %type<p_node>  Aloexpr Item Factor Val Elem Idexpr Literal Realarg Arg Realargs
 %type<p_operator_node> Alotail Itemtail Cmptail Andtail Ortail Asstail
@@ -76,39 +83,39 @@ Program         : Segment
                     {
                         if (!$1->is_var_def)
                         {
-                            // 当函数有函数体即为函数定义时 这里少个检查吧，明天再补，太晚了
+                            // 当函数有函数体即为函数定义时
                             if ($1->p_def_func->p_body != NULL)
                             {
-                                syn_tree.get_root()->add_sub_program($1->p_def_func->p_body);
+                                Func * p_func = 
+                                    new Func($1->p_def_func->p_body, $1->p_def_func->p_type_func, $1->p_def_func->name, yylineno);
+
+                                syn_tree.get_root()->add_sub_program(p_func);
                                 $1->p_def_func->p_body->set_content($1->p_def_func->name);
                             }
 
                             free($1->p_def_func->name);
                             free($1->p_def_func);
                         }
-                            
+
                         free($1);
                         parser_tracker("Program Segment");
                     }
                 | Program Segment
                     {
-                        if (!$2->is_var_def)
+                        // 当函数有函数体即为函数定义时
+                        if ($2->p_def_func->p_body != NULL)
                         {
-                            if ($2->p_def_func->p_body != NULL)
-                            {
-                                syn_tree.get_root()->add_sub_program($2->p_def_func->p_body);
-                                $2->p_def_func->p_body->set_content($2->p_def_func->name);
-                            }
+                            Func * p_func = 
+                                new Func($2->p_def_func->p_body, $2->p_def_func->p_type_func, $2->p_def_func->name, yylineno);
 
-                            free($2->p_def_func->name);
-                            free($2->p_def_func);
+                            syn_tree.get_root()->add_sub_program(p_func);
+                            $2->p_def_func->p_body->set_content($2->p_def_func->name);
                         }
-                            
-                        free($2);
-                        parser_tracker("Program Program Segment");
+
+                        free($2->p_def_func->name);
+                        free($2->p_def_func);
                     };
 
-// 只考虑单个声明情况下
 Segment         :  Type Def
                     {
                         // 变量声明
@@ -135,13 +142,15 @@ Segment         :  Type Def
                         // 函数声明
                         else
                         {
-                            Func * p_func;
+                            TypeFunc * p_type_func;
+
                             // 函数只有两种类型：void和int，分开创建，因为type返回只能是普通的void或int
                             if ($1->get_type() == Type::INT)
-                                p_func = new Func(Type::FUNC_INT, $2->p_def_func->param_ids);
+                                p_type_func = new TypeFunc(Type::FUNC_INT, $2->p_def_func->param_ids);
                             else
-                                p_func = new Func(Type::FUNC_VOID, $2->p_def_func->param_ids);
-                            sym_table.put($2->p_def_func->name, p_func, yylineno);
+                                p_type_func = new TypeFunc(Type::FUNC_VOID, $2->p_def_func->param_ids);
+                            $2->p_def_func->p_type_func = p_type_func;
+                            sym_table.put($2->p_def_func->name, p_type_func, yylineno);
                         }
 
                         $$ = $2;
@@ -303,13 +312,16 @@ Idtail          :  Vardef Deflist
 
                         p_def->is_var_def = false;
                         p_def->p_def_func = p_def_func;
-                        for (int i = 0; i < PARAMS_SIZE; i++)
-                            p_def_func->param_ids[i] = -1;
-                        p_def_func-> p_body = $4;
+                        p_def_func->p_body = $4;
                         if ($2 != NULL)
-                        {
-                            
-                        }
+                            for (int i = 0; i < PARAMS_SIZE; i++)
+                            {
+                                // cout << $2[i] << endl;
+                                p_def_func->param_ids[i] = $2[i];
+                            }
+                        else
+                            for (int i = 0; i < PARAMS_SIZE; i++)
+                                p_def_func->param_ids[i] = -1;
 
                         $$ = p_def;
                         parser_tracker("Idtail (Para) Functail");
@@ -317,10 +329,6 @@ Idtail          :  Vardef Deflist
 
 Functail        :  Blockstat
                     {
-                        if ($1 != NULL)
-                            // 设置Block为函数体
-                            $1->set_func();
-                        
                         $$ = $1;
                         parser_tracker("Functail Blockstat");
                     }
@@ -331,18 +339,85 @@ Para            :           // 这个可能不对
                     { $$ = NULL; }
                 | Onepara Oneparas
                     {
+                        int * p_params_def, * p_params_order;
+                        int params_num;  // 参数个数
+
+                        // 如果该Oneparas是最后一个参数，创建指向参数的指针并初始化数组全部置-1
+                        if ($2 == NULL)
+                        {
+                            p_params_def = (int *) malloc(PARAMS_SIZE * sizeof(int));
+                            for (int i = 0; i < PARAMS_SIZE; i++)
+                                p_params_def[i] = -1;
+                        }
+                        else
+                            p_params_def = $2;
+                        // 放入新参数
+                        for (int i = 0; i < PARAMS_SIZE; i++)
+                        {
+                            if (p_params_def[i] == -1)
+                            {
+                                p_params_def[i] = $1;
+                                break;
+                            }
+                            // 如果变量数已达到上限，抛出异常
+                            if (p_params_def[i] != -1 && i == PARAMS_SIZE - 1)
+                                throw new ParserException("too many parameters");
+                        }
+
+                        // 因为参数放置是倒叙的，所以从后往前重新排序参数
+                        p_params_order = (int *) malloc(PARAMS_SIZE * sizeof(int));
+                        // 还是先全部置-1
+                        for (int i = 0; i < PARAMS_SIZE; i++)
+                            p_params_order[i] = -1;
+                        // 计算共多少个
+                        for (int i = 0; i< PARAMS_SIZE; i++)
+                            if(p_params_def[i] != -1)
+                                params_num++;
+                            else
+                                break;
+                        // 仅对有效参数id转置
+                        for (int i = 0; i < params_num; i++)
+                            p_params_order[i] = p_params_def[params_num - 1 - i];
+
+                        $$ = p_params_order;
                         parser_tracker("Para");
                     };
 
 Oneparas        :
-                    {}
+                    { $$ = NULL; }
                 | ',' Onepara Oneparas
                     {
+                        int * p_params_def;
+
+                        // 如果该Oneparas是最后一个参数，创建指向参数的指针并初始化数组全部置-1
+                        if ($3 == NULL)
+                        {
+                            p_params_def = (int *) malloc(PARAMS_SIZE * sizeof(int));
+                            for (int i = 0; i < PARAMS_SIZE; i++)
+                                p_params_def[i] = -1;
+                        }
+                        else
+                            p_params_def = $3;
+
+                        for (int i = 0; i < PARAMS_SIZE; i++)
+                        {
+                            if (p_params_def[i] == -1)
+                            {
+                                p_params_def[i] = $2;
+                                break;
+                            }
+                            // 如果变量数已达到上限，抛出异常
+                            if (p_params_def[i] != -1 && i == PARAMS_SIZE - 1)
+                                throw new ParserException("too many parameters");
+                        }
+                        
+                        $$ = p_params_def;
                         parser_tracker("Oneparas");
                     };
 
 Onepara         : Type Paradata
                     {
+                        $$ = sym_table.put($2, $1, yylineno);
                         parser_tracker("Onepara");
                     };
 
@@ -352,6 +427,8 @@ Paradata        : '*' IDENT
                     }
                 | IDENT Paradatatail
                     {
+                        // 直接不考虑数组的情况
+                        $$ = $1;
                         parser_tracker("Paradata IDENT Paradatatail");
                     };
 
@@ -361,11 +438,12 @@ Paradatatail    : '[' ']' Paradatatails  // 这个可能也有问题
                     }
                 | Paradatatails
                     {
+                        $$ = $1;
                         parser_tracker("Paradata Paradatatails");
                     };
 
 Paradatatails   :
-                    {}
+                    { $$ = NULL; }
                 | '[' NUM ']' Paradatatails
                     {
                         parser_tracker("Paradatatails");
@@ -534,6 +612,7 @@ Continuestat    : CONTINUE ';'
 
 Returnstat      : RETURN Altexpr ';'
                     {
+                        $$ = new Return($2, yylineno);
                         parser_tracker("Returnstat");
                     };
 
@@ -593,8 +672,8 @@ Elsestat        :
                         $$ = new Else($2, yylineno);
                         parser_tracker("Elsestat");
                     };
+
 // --完成--
-// 表达式Expr
 Altexpr         :
                     { $$ = NULL; }
                 | Expr

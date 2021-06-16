@@ -16,7 +16,8 @@ class Variable: public Terminal
     // 输出用于产生图的dot文件
     virtual void gen_graph(std::ofstream * p_fout) const;
     // 并不输出四元式，只返回Terminal指针
-    virtual const Terminal * gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const;
+    virtual const Terminal * gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
+        QuadTable * p_quad_table) const;
     // 返回变量的string表示，为名字name_
     virtual std::string to_string() const;
   protected:

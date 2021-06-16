@@ -21,15 +21,6 @@ void QuadTable::export_to_file(std::ofstream * p_fout)
 {
     std::vector<int> tempVec;
 
-    //     vector<vector<int>> vec(5, vector<int>(6, 0));
-    // int i,j;
-    // for (i = 0; i < vec.size(); i++)
-    // {
-    //     for(j = 0; j < vec[i].size(); j++)
-    //         cout << vec[i][j] << " ";
-    //     cout << endl;
-    // }
-    // 用迭代器好像搞不定逗号，回头再看吧
     for(std::vector<std::vector<std::string>>::iterator it_outer = this->quadruples_.begin(); 
         it_outer != this->quadruples_.end(); it_outer++)
     {

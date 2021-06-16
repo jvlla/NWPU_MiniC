@@ -18,7 +18,8 @@ void Op::gen_graph(std::ofstream * p_fout) const
     this->p_second_->gen_graph(p_fout);
 }
 
-const Terminal * Op::gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const
+const Terminal * Op::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
+    QuadTable * p_quad_table) const
 {
     const Terminal * ret_terminal_1, * ret_terminal_2;  // 子节点返回对象
     std::string arg_1, arg_2, result;  // 输出到四元式的字符串
@@ -28,8 +29,10 @@ const Terminal * Op::gen_ir(int label_in, int label_out, QuadTable * p_quad_tabl
     if (this->p_operator_->get_type() != Operator::BINARY_AND 
         && this->p_operator_->get_type() != Operator::BINARY_OR)
     {
-        ret_terminal_1 = this->p_first_->gen_ir(label_in, label_out, p_quad_table);
-        ret_terminal_2 = this->p_second_->gen_ir(label_in, label_out, p_quad_table);
+        ret_terminal_1 = 
+            this->p_first_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
+        ret_terminal_2 = 
+            this->p_second_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
         arg_1 = ret_terminal_1->to_string();
         arg_2 = ret_terminal_2->to_string();
         switch (this->p_operator_->get_type())
@@ -85,13 +88,15 @@ const Terminal * Op::gen_ir(int label_in, int label_out, QuadTable * p_quad_tabl
         // 以&&为例，这个翻译类似于if(a!=0){再对b判断} else r=0; 是两个if嵌套
         if (this->p_operator_->get_type() == Operator::BINARY_AND)
         {
-            ret_terminal_1 = this->p_first_->gen_ir(label_in, label_out, p_quad_table);
+            ret_terminal_1 = 
+                this->p_first_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
             arg_1 = ret_terminal_1->to_string();
             p_quad_table->add("JNZ", arg_1, "", "L" + std::to_string(label[0]));
             p_quad_table->add_jump_label(label[3]);
             p_quad_table->add_label(label[0]);
             // ----进入内层if并对arg_2进行求值，这样在外层为假时不需要执行内层运算，是短路求值
-            ret_terminal_2 = this->p_second_->gen_ir(label_in, label_out, p_quad_table);
+            ret_terminal_2 = 
+                this->p_second_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
             arg_2 = ret_terminal_2->to_string();
             p_quad_table->add("JNZ", arg_2, "", "L" + std::to_string(label[1]));
             p_quad_table->add_jump_label(label[2]);
@@ -110,13 +115,15 @@ const Terminal * Op::gen_ir(int label_in, int label_out, QuadTable * p_quad_tabl
         else
         {
             // 基本同上，改变判断条件及赋值结果
-            ret_terminal_1 = this->p_first_->gen_ir(label_in, label_out, p_quad_table);
+            ret_terminal_1 = 
+                this->p_first_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
             arg_1 = ret_terminal_1->to_string();
             p_quad_table->add("JZ", arg_1, "", "L" + std::to_string(label[0]));
             p_quad_table->add_jump_label(label[3]);
             p_quad_table->add_label(label[0]);
             // ----进入内层if并对arg_2进行求值，这样在外层为假时不需要执行内层运算，是短路求值
-            ret_terminal_2 = this->p_second_->gen_ir(label_in, label_out, p_quad_table);
+            ret_terminal_2 = 
+                this->p_second_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
             arg_2 = ret_terminal_2->to_string();
             p_quad_table->add("JZ", arg_2, "", "L" + std::to_string(label[1]));
             p_quad_table->add_jump_label(label[2]);

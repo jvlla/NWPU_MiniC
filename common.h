@@ -11,7 +11,7 @@
 #include "SymTable/SymTableException.h"
 #include "SymTable/Type.h"
 #include "SymTable/Type.h"
-#include "SymTable/Func.h"
+#include "SymTable/TypeFunc.h"
 #include "SymTable/Array.h"
 
 #include "SynTree/SynTree.h"
@@ -28,6 +28,8 @@
 #include "SynTree/While.h"
 #include "SynTree/Break.h"
 #include "SynTree/Continue.h"
+#include "SynTree/Return.h"
+#include "SynTree/Func.h"
 #include "SynTree/SynTreeException.h"
 
 #include "ParserException.h"

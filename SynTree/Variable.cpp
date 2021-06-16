@@ -28,7 +28,8 @@ void Variable::gen_graph(std::ofstream * p_fout) const
     Terminal::gen_graph(p_fout);
 }
 
-const Terminal * Variable::gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const
+const Terminal * Variable::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
+    QuadTable * p_quad_table) const
 {
     return this;
 }

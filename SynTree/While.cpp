@@ -20,7 +20,8 @@ void While::gen_graph(std::ofstream * p_fout) const
         this->p_statement_->gen_graph(p_fout);
 }
 
-const Terminal * While::gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const
+const Terminal * While::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
+    QuadTable * p_quad_table) const
 {
     long label[3];
     const Terminal * terminal_condition, * terminal_loop;
@@ -30,14 +31,16 @@ const Terminal * While::gen_ir(int label_in, int label_out, QuadTable * p_quad_t
         label[i] = SynNode::get_new_label();
     // 翻译见曾老师PPT Ch05-4 P6
     p_quad_table->add_label(label[0]);
-    terminal_condition = this->p_condition_->gen_ir(label_in, label_out, p_quad_table);
+    terminal_condition = 
+        this->p_condition_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
     condition = terminal_condition->to_string();
     p_quad_table->add("JNZ", condition, "", "L" + std::to_string(label[1]));
     p_quad_table->add_jump_label(label[2]);
     p_quad_table->add_label(label[1]);
     // while语句中，label_in为label[0], label_out为label[2]
     if (this->p_statement_ != NULL)
-        terminal_loop = this->p_statement_->gen_ir(label[0], label[2], p_quad_table);
+        terminal_loop = 
+            this->p_statement_->gen_ir(label[0], label[2], label_ret, temp_ret, p_quad_table);
     p_quad_table->add_jump_label(label[0]);
     p_quad_table->add_label(label[2]);
 

@@ -16,6 +16,10 @@ std::string TempVariable::to_string() const
 
 void TempVariable::gen_graph(std::ofstream * p_fout) const {}
 
-Terminal * TempVariable::gen_ir(int label_in, int label_out, QuadTable * p_quad_table) const { return NULL; }
+Terminal * TempVariable::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
+    QuadTable * p_quad_table) const
+{
+    return NULL;
+}
 
 std::string TempVariable::get_node_content() const{ return NULL; }
