@@ -61,11 +61,30 @@ int main(int argc, char *argv[])
     try
     {
         // 进行语法分析，生成抽象语法树
+#ifdef DEBUG
+        cout << "------------------------------------------------------In parser" << endl;
+        cout << "                                                   After parser" << endl;
+#endif
         yyparse();
         // 输出符号表、语法树和中间表达式
+#ifdef DEBUG
+        cout << "-------------------------------------------------In gen_table()" << endl;
+        cout << "                                                   After parser" << endl;
+#endif
         sym_table.gen_table(&sym_table_stream);
+#ifdef DEBUG
+        cout << "                                              After gen_table()" << endl;
+        cout << "-------------------------------------------------In gen_graph()" << endl;
+#endif
         syn_tree.gen_graph(&graph_stream, file_name);
+#ifdef DEBUG
+        cout << "                                              After gen_graph()" << endl;
+        cout << "----------------------------------------------------In gen_ir()" << endl;
+#endif
         syn_tree.gen_ir(&quad_table);
+#ifdef DEBUG
+        cout << "                                                 After gen_ir()" << endl;
+#endif
         // quad_table.add("a", "b", "c", "d");
         quad_table.export_to_file(&quad_table_stream);
         // 使用graphviz生成树

@@ -30,11 +30,12 @@
 #include "SynTree/Continue.h"
 #include "SynTree/Return.h"
 #include "SynTree/Func.h"
+#include "SynTree/FuncCall.h"
 #include "SynTree/SynTreeException.h"
 
 #include "ParserException.h"
 #include "LexerException.h"
 
-#define DEBUG  // 其实就只有helper.cpp中有一个parser_tracker()函数用于输出parser过程中递归经过了哪些非终结符
+#define DEBUG  // 设置之后可以在各阶段递归调用时输出一些参数，方便看哪里出错出异常什么的
 
 using namespace std;

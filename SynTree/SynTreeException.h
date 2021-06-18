@@ -6,10 +6,11 @@
 class SynTreeException: public std::exception
 {
   public:
-    SynTreeException(std::string message);
+    SynTreeException(std::string message, int line);
 	const char * what() const throw();
   private:
-	  std::string message;
+	  std::string message_;
+    int line_;
 };
 
 #endif

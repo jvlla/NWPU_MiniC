@@ -1,4 +1,5 @@
 #include "SynNode.h"
+#include "../common.h"
 
 long SynNode::s_count_ = 0;
 long SynNode::s_label_ = 0;
@@ -20,11 +21,40 @@ void SynNode::set_prev(SynNode * p_prev)
 
 void SynNode::gen_graph(std::ofstream * p_fout) const
 {
+#ifdef DEBUG
+    std::string node_type_str;
+    switch(this->node_type_)
+    {
+        case SynNode::EXPR: node_type_str = "Expr"; break;
+        case SynNode::OP: node_type_str = "Op"; break;
+        case SynNode::UNARY: node_type_str = "Unary"; break;
+        case SynNode::TERMINAL: node_type_str = "Terminal"; break;
+        case SynNode::VARIABLE: node_type_str = "Variable"; break;
+        case SynNode::CONSTANT: node_type_str = "Constant"; break;
+        case SynNode::TEMP_VARIABLE: node_type_str = "TempVariable"; break;
+        case SynNode::BLOCK: node_type_str = "Block"; break;
+        case SynNode::STMT: node_type_str = "Stmt"; break;
+        case SynNode::IF: node_type_str = "If"; break;
+        case SynNode::ELSE: node_type_str = "Else"; break;
+        case SynNode::WHILE: node_type_str = "While"; break;
+        case SynNode::BREAK: node_type_str = "Break"; break;
+        case SynNode::CONTINUE: node_type_str = "Continue"; break;
+        case SynNode::RETURN: node_type_str = "Return"; break;
+        case SynNode::FUNC: node_type_str = "Func"; break;
+        case SynNode::FUNC_CALL: node_type_str = "FuncCall"; break;
+    }
+    std::cout << node_type_str << ": " << this->get_node_content() << std::endl;
+#endif
     this->emit_node(p_fout);  // 先生成自己的节点，这样之后才能连起来
     this->emit_link(p_fout);  // 把自己和前驱连起来
 }
 
-SynNode::node_type_set SynNode::get_node_type()
+int SynNode::get_line() const
+{
+    return this->line_;
+}
+
+SynNode::node_type_set SynNode::get_node_type() const
 {
     return this->node_type_;
 }

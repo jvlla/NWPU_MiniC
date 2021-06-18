@@ -9,7 +9,7 @@ class Op: public Expr
     // 注意，每个构造函数都要调用传递过来的节点的set_prev()函数设定前驱
     Op(SynNode * p_first, SynNode * p_second, Operator * p_operator, int line);
     // 输出用于产生图的dot文件
-    void gen_graph(std::ofstream * p_fout) const;
+    virtual void gen_graph(std::ofstream * p_fout) const;
     virtual const Terminal * gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
         QuadTable * p_quad_table) const;
   protected:

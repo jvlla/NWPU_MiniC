@@ -8,7 +8,7 @@
 class Array: public Type
 {
   public:
-    // 传入的维度数组limit必须都先初始化为0
+    // 传入的维度数组limit必须都先初始化为-1
     Array(type_set type, int * p_limit);
     // 用于在使用变量时判断使用是否合法
     virtual bool isLegal(Type * restrict) const;

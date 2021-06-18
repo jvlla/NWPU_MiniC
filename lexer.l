@@ -93,6 +93,6 @@ white_line  \n|\r\n
 
 .               {
                     // cout << "Line(" << yylineno <<"): Invalid char " << yytext << endl;
-                    throw new LexerException("Line(" + to_string(yylineno) + "): Invalid char " + yytext);
+                    throw new LexerException((string)"Invalid char " + yytext, yylineno);
                 }
 %%

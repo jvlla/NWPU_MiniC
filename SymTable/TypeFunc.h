@@ -13,6 +13,8 @@ class TypeFunc: public Type
     virtual bool isLegal(Type * restrict) const;
     // 只用在输出图的时候打印数组值
     virtual std::string get_type_content() const;
+    // 返回参数的类型id数组
+    int * get_params_type();
   private:
     Type::type_set type_;
     int types_[PARAMS_SIZE];

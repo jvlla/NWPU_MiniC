@@ -21,5 +21,6 @@ Type::type_set Type::get_type()
 
 std::string Type::get_type_content() const
 {
-    return NULL;
+    // 太坑了，string不能返回NULL，否则一旦用于赋值之类，会抛出异常，必须返回空字符串
+    return "";
 }

@@ -23,6 +23,7 @@ extern SynTree syn_tree;
     Operator * p_operator;
     struct def * p_def;  // 传递函数、变量声明结构体
     struct def_vars * p_def_vars;  // 传递变量声明结构体
+    struct var_params * p_var_params;  // 传递变量参数的结构体，面对如a[1], b(2, 3)这样的情况
     If * p_if;
     Else * p_else;
     int * p_params_def;  // 指向数组的指针，数组中存放的是变量声明的id
@@ -71,14 +72,19 @@ extern SynTree syn_tree;
 %type<p_else> Elsestat
 /* 表达式部分 */
 %type<p_node> Altexpr Expr Assexpr Orexpr Andexpr Cmpexpr
-%type<p_node>  Aloexpr Item Factor Val Elem Idexpr Literal Realarg Arg Realargs
+%type<p_node> Aloexpr Item Factor Val Elem Literal
 %type<p_operator_node> Alotail Itemtail Cmptail Andtail Ortail Asstail
+/* 函数调用参数 */
+%type<p_var_params> Idexpr Realarg Realargs
+%type<p_node> Arg
+/* 操作符 */
 %type<p_operator> '=' AND OR
 %type<p_operator> Addsub Muldiv Lop Cmps Rop
 
 %start  Program
 
 %%
+// --完成--
 Program         : Segment
                     {
                         if (!$1->is_var_def)
@@ -88,7 +94,6 @@ Program         : Segment
                             {
                                 Func * p_func = 
                                     new Func($1->p_def_func->p_body, $1->p_def_func->p_type_func, $1->p_def_func->name, yylineno);
-
                                 syn_tree.get_root()->add_sub_program(p_func);
                                 $1->p_def_func->p_body->set_content($1->p_def_func->name);
                             }
@@ -114,8 +119,10 @@ Program         : Segment
 
                         free($2->p_def_func->name);
                         free($2->p_def_func);
+                        parser_tracker("Program Program Segment");
                     };
 
+// --完成--
 Segment         :  Type Def
                     {
                         // 变量声明
@@ -157,6 +164,7 @@ Segment         :  Type Def
                         parser_tracker("Segment");
                     };
 
+// --完成--
 Type            :  INT
                     {
                         $$ = new Type(Type::INT);
@@ -183,7 +191,7 @@ Def             :  '*' IDENT Deflist
                                 if (i == VARS_SIZE - 1 && p_def_vars->p_names[i] != NULL)
                                     throw new ParserException(
                                         "The number of variable eclaration exceed limit " 
-                                        + to_string(VARS_SIZE));
+                                        + to_string(VARS_SIZE), yylineno);
                                 if (p_def_vars->p_names[i] == NULL)
                                 {
                                     p_def_vars->p_names[i] = $1;
@@ -222,7 +230,7 @@ Deflist         :  ',' Defdata Deflist
                                 if (i == VARS_SIZE - 1 && $3->p_names[i] != NULL)
                                     throw new ParserException(
                                         "The number of variable eclaration exceed limit " 
-                                        + to_string(VARS_SIZE));
+                                        + to_string(VARS_SIZE), yylineno);
                                 if ($3->p_names[i] == NULL)
                                 {
                                     $3->p_names[i] = $2;
@@ -291,7 +299,7 @@ Idtail          :  Vardef Deflist
                             //     if (i == VARS_SIZE - 1 && $2->p_names[i] != NULL)
                             //         throw new ParserException(
                             //             "The number of variable eclaration exceed limit " 
-                            //             + to_string(VARS_SIZE));
+                            //             + to_string(VARS_SIZE), yylineno);
                             //     if ($3->p_names[i] == NULL)
                             //     {
                             //         $2->p_names[i] = $1;
@@ -327,6 +335,7 @@ Idtail          :  Vardef Deflist
                         parser_tracker("Idtail (Para) Functail");
                     }
 
+// --完成--
 Functail        :  Blockstat
                     {
                         $$ = $1;
@@ -361,7 +370,7 @@ Para            :           // 这个可能不对
                             }
                             // 如果变量数已达到上限，抛出异常
                             if (p_params_def[i] != -1 && i == PARAMS_SIZE - 1)
-                                throw new ParserException("too many parameters");
+                                throw new ParserException("too many parameters", yylineno);
                         }
 
                         // 因为参数放置是倒叙的，所以从后往前重新排序参数
@@ -378,6 +387,7 @@ Para            :           // 这个可能不对
                         // 仅对有效参数id转置
                         for (int i = 0; i < params_num; i++)
                             p_params_order[i] = p_params_def[params_num - 1 - i];
+                        free(p_params_def);
 
                         $$ = p_params_order;
                         parser_tracker("Para");
@@ -408,7 +418,7 @@ Oneparas        :
                             }
                             // 如果变量数已达到上限，抛出异常
                             if (p_params_def[i] != -1 && i == PARAMS_SIZE - 1)
-                                throw new ParserException("too many parameters");
+                                throw new ParserException("too many parameters", yylineno);
                         }
                         
                         $$ = p_params_def;
@@ -526,7 +536,7 @@ Localdef        : Type Defdata Deflist
                                 if (i == VARS_SIZE - 1 && $3->p_names[i] != NULL)
                                     throw new ParserException(
                                         "The number of variable eclaration exceed limit " 
-                                        + to_string(VARS_SIZE));
+                                        + to_string(VARS_SIZE), yylineno);
                                 if ($3->p_names[i] == NULL)
                                 {
                                     $3->p_names[i] = $2;
@@ -610,6 +620,7 @@ Continuestat    : CONTINUE ';'
                         parser_tracker("Continuestat");
                     };
 
+// --完成--
 Returnstat      : RETURN Altexpr ';'
                     {
                         $$ = new Return($2, yylineno);
@@ -623,6 +634,7 @@ Assignstat      : Altexpr ';'
                         parser_tracker("Assignstat Altexpr ;");
                     };
 
+// --完成--
 Blockstat       : '{' Subprogram '}'
                     {
                         $$ = $2;
@@ -681,18 +693,21 @@ Altexpr         :
                         $$ = $1;
                         parser_tracker("Altexpr");
                     };
+
 // --完成--
 Expr            : Assexpr
                     {
                         $$ = $1;
                         parser_tracker("Expr");
                     };
-// --完成-- 可能
+
+// --完成--
 Assexpr         : Orexpr Asstail
                     {
                         $$ = node_struct($1, $2, yylineno);
                         parser_tracker("Assexpr");
                     };
+
 // --完成--
 Asstail         :   { $$ = NULL; }
                 | '=' Assexpr Asstail
@@ -700,12 +715,14 @@ Asstail         :   { $$ = NULL; }
                         $$ = operator_node_struct($1, $2, $3, yylineno);
                         parser_tracker("Asstail");
                     };
+
 // --完成--
 Orexpr          : Andexpr Ortail
                     {
                         $$ = node_struct($1, $2, yylineno);
                         parser_tracker("Orexpr");
                     };
+
 // --完成--
 Ortail          :   { $$ = NULL; }
                 | OR Andexpr Ortail
@@ -713,12 +730,14 @@ Ortail          :   { $$ = NULL; }
                         $$ = operator_node_struct($1, $2, $3, yylineno);
                         parser_tracker("Ortail");
                     };
+
 // --完成--
 Andexpr         : Cmpexpr Andtail
                     {
                         $$ = node_struct($1, $2, yylineno);
                         parser_tracker("Andexpr");
                     };
+
 // --完成--
 Andtail         :   { $$ = NULL; }
                 | AND Cmpexpr Andtail
@@ -726,12 +745,14 @@ Andtail         :   { $$ = NULL; }
                         $$ = operator_node_struct($1, $2, $3, yylineno);
                         parser_tracker("Andexpr");
                     };
+
 // --完成--
 Cmpexpr         : Aloexpr Cmptail
                     {
                         $$ = node_struct($1, $2, yylineno);
                         parser_tracker("Cmpexpr");
                     };
+
 // --完成--
 Cmptail         :   { $$ = NULL; }
                 | Cmps Aloexpr Cmptail
@@ -739,6 +760,7 @@ Cmptail         :   { $$ = NULL; }
                         $$ = operator_node_struct($1, $2, $3, yylineno);
                         parser_tracker("Cmptail");
                     };
+
 // --完成--
 Cmps            : '>' { $$ = new Operator(Operator::BINARY_GREATER); } 
                 | '<' { $$ = new Operator(Operator::BINARY_LESS); } 
@@ -746,6 +768,7 @@ Cmps            : '>' { $$ = new Operator(Operator::BINARY_GREATER); }
                 | LE { $$ = new Operator(Operator::BINARY_LESS_EQUAL); }
                 | EQ { $$ = new Operator(Operator::BINARY_EQUAL); }
                 | NE { $$ = new Operator(Operator::BINARY_NOT_EQUAL); }
+
 // --完成--
 Aloexpr         : Item Alotail
                     {
@@ -755,6 +778,7 @@ Aloexpr         : Item Alotail
                             $$ = $1;
                         parser_tracker("Aloexpr");
                     };
+
 // --完成--
 Alotail         :   { $$ = NULL; }
                 | Addsub Item Alotail
@@ -762,10 +786,12 @@ Alotail         :   { $$ = NULL; }
                         $$ = operator_node_struct($1, $2, $3, yylineno);
                         parser_tracker("Alotail");
                     };
-// --完成--
+
 // 之后这些应该就是用来算数的了
+// --完成--
 Addsub          : '+' { $$ = new Operator(Operator::BINARY_ADD); }
                 | '-' { $$ = new Operator(Operator::BINARY_SUB); };
+
 // --完成--
 Item            : Factor Itemtail
                     {
@@ -775,6 +801,7 @@ Item            : Factor Itemtail
                             $$ = $1;
                         parser_tracker("Item");
                     };
+
 // --完成--
 Itemtail        :   { $$ = NULL; }
                 | Muldiv Factor Itemtail
@@ -782,9 +809,11 @@ Itemtail        :   { $$ = NULL; }
                         $$ = operator_node_struct($1, $2, $3, yylineno);
                         parser_tracker("Itemtail");
                     };
+
 // --完成--
 Muldiv          : '*' { $$ = new Operator(Operator::BINARY_MUL); }
                 | '/' { $$ = new Operator(Operator::BINARY_DIV); };
+
 // --完成--
 Factor          : Lop Factor
                     {
@@ -796,6 +825,7 @@ Factor          : Lop Factor
                         $$ = $1;
                         parser_tracker("Factor Val");
                     }
+
 // --完成--
 Lop             : '!' { $$ = new Operator(Operator::UNARY_NOT); }
                 | '-' { $$ = new Operator(Operator::UNARY_MINUS); }
@@ -803,6 +833,7 @@ Lop             : '!' { $$ = new Operator(Operator::UNARY_NOT); }
                 | '*' { $$ = new Operator(Operator::UNARY_INDIRECTION); }  // 这个应该是解引用符号吧，回头要注意
                 | INCR { $$ = new Operator(Operator::UNARY_INCR); } 
                 | DECR { $$ = new Operator(Operator::UNARY_DECR); };
+
 // --完成--
 Val             : Elem
                     {
@@ -814,13 +845,36 @@ Val             : Elem
                         $$ = new Unary($1, $2, yylineno);
                         parser_tracker("Val Rop");
                     }
+
 // --完成--
 Rop             : INCR { $$ = new Operator(Operator::UNARY_INCR); }
                 | DECR { $$ = new Operator(Operator::UNARY_DECR); };
 
 Elem            : IDENT Idexpr
                     {
-                        if ($2 == NULL)
+                        if ($2 != NULL)
+                        {
+                            Block * p_root;
+                            Func * p_func;
+                            long func_label_in;
+                            TypeFunc * p_func_type;
+                            Terminal * p_func_terminal;
+
+                            // 从root节点找函数节点，办法是很烂，但凑合用吧，要来不及了
+                            p_root = syn_tree.get_root();
+                            p_func = p_root->get_func($1);
+                            if (p_func == NULL)
+                                throw new ParserException("Can't find function " + (string) $1 + " when function call"
+                                    , yylineno);
+                            func_label_in = p_func->get_label_in();
+                            p_func_type = p_func->get_func_type();
+                            p_func_terminal = p_func->get_ret_terminal();
+
+                            if($2->is_func_call)
+                                $$ = new FuncCall($1, $2->p_params_nodes
+                                    , p_func_type, func_label_in, p_func_terminal, &sym_table, yylineno);
+                        }
+                        else
                             $$ = new Variable($1, &sym_table, yylineno);
                         parser_tracker("Elem IDENT Idexpr");
                     }
@@ -842,8 +896,10 @@ Idexpr          :   { $$ = NULL; }
                     }
                 | '(' Realarg ')'
                     {
+                        $$ = $2;
                         parser_tracker("Idexpr (Realarg)");
                     }
+
 // --完成--
 Literal         : NUM
                     {
@@ -852,18 +908,98 @@ Literal         : NUM
                     }
 
 Realarg         :  // 这是不是也可能有问题
-                    {}
+                    { $$ = NULL; }
                 | Arg Realargs
                     {
-                        parser_tracker("Realarg");
+                        struct var_params * p_var_params, * p_var_params_order;
+                        int params_num = 0;
+
+                        if ($2->p_params_nodes[0] == NULL)
+                            cout << "wrong at first" << endl;
+
+                        if ($2 == NULL)
+                        {
+                            p_var_params = new struct var_params();
+                            p_var_params->is_func_call = true;
+                            for (int i = 0; i < PARAMS_SIZE; i++)
+                                p_var_params->p_params_nodes[i] = NULL;
+                        }
+                        else
+                            p_var_params = $2;
+
+                        for (int i = 0; i < PARAMS_SIZE; i++)
+                        {
+                            if (p_var_params->p_params_nodes[i] == NULL)
+                            {
+                                cout << "in" << endl;
+                                p_var_params->p_params_nodes[i] = $1;
+                                if($1 != NULL)
+                                    cout << "yes111-------------" << endl;
+                                if(p_var_params->p_params_nodes[i] != NULL)
+                                    cout << "yesinininininiiini-------------" << endl;
+                                break;
+                            }
+                            // 如果变量数已达到上限，抛出异常
+                            if (p_var_params->p_params_nodes[i] != NULL && i == PARAMS_SIZE - 1)
+                                throw new ParserException("too many parameters", yylineno);
+                        }
+
+                        // 因为参数放置是倒叙的，所以从后往前重新排序参数
+                        p_var_params_order = new struct var_params();
+                        p_var_params_order->is_func_call = true;
+                        // 还是先全部置NULL
+                        for (int i = 0; i < PARAMS_SIZE; i++)
+                            p_var_params_order->p_params_nodes[i] = NULL;
+                        // 计算共多少个
+                        for (int i = 0; i< PARAMS_SIZE; i++)
+                            if(p_var_params->p_params_nodes[i] != NULL)
+                                params_num++;
+                            else
+                                break;
+                        // 仅对有效参数id转置
+                        for (int i = 0; i < params_num; i++)
+                            p_var_params_order->p_params_nodes[i] = p_var_params->p_params_nodes[params_num - 1 - i];
+                        free(p_var_params);
+                        
+                        $$ = p_var_params_order;
+                        parser_tracker("Realarg Arg Realargs");
                     }
 
 Realargs        :
-                    {}
+                    { $$ = NULL; }
                 | ',' Arg Realargs
                     {
+                        if ($2 == NULL)
+                            throw new ParserException(
+                                "need a parameter between two comma in function call", yylineno);
+                        struct var_params * p_var_params;
+
+                        if ($3 == NULL)
+                        {
+                            p_var_params = new struct var_params();
+                            p_var_params->is_func_call = true;
+                            for (int i = 0; i < PARAMS_SIZE; i++)
+                                p_var_params->p_params_nodes[i] = NULL;
+                        }
+                        else
+                            p_var_params = $3;
+
+                        for (int i = 0; i < PARAMS_SIZE; i++)
+                        {
+                            if (p_var_params->p_params_nodes[i] == NULL)
+                            {
+                                p_var_params->p_params_nodes[i] = $2;
+                                break;
+                            }
+                            // 如果变量数已达到上限，抛出异常
+                            if (p_var_params->p_params_nodes[i] != NULL && i == PARAMS_SIZE - 1)
+                                throw new ParserException("too many parameters", yylineno);
+                        }
+
+                        $$ = p_var_params;
                         parser_tracker("Realargs");
                     }
+
 // --完成--
 Arg             : Expr
                     {

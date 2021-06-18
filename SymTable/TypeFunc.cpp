@@ -5,10 +5,7 @@ TypeFunc::TypeFunc(type_set type, int types[PARAMS_SIZE]): Type(type)
     this->type_ = type;
     for (int i = 0; i < PARAMS_SIZE; i++)
     {
-        if (types[i] != -1)
-            this->types_[i] = types[i];
-        else
-            break;
+        this->types_[i] = types[i];
     }   
 }
 
@@ -38,4 +35,9 @@ std::string TypeFunc::get_type_content() const
 {
     // 先这样
     return "()";
+}
+
+int * TypeFunc::get_params_type()
+{
+    return this->types_;
 }

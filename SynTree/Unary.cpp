@@ -49,10 +49,10 @@ const Terminal * Unary::gen_ir(int label_in, int label_out, int label_ret, TempV
             p_quad_table->add("-", "0", arg, (Expr::get_temp_variable())->to_string());
             break;
         case Operator::UNARY_ADDRESS:
-            throw new SynTreeException("Unsupported address operator &");
+            throw new SynTreeException("Unsupported address operator &", SynNode::get_line());
             break;
         case Operator::UNARY_INDIRECTION:
-            throw new SynTreeException("Unsupported indirection operator *");
+            throw new SynTreeException("Unsupported indirection operator *", SynNode::get_line());
             break;
         case Operator::UNARY_INCR:
             // 将++自增变为+1，并赋值
@@ -65,7 +65,7 @@ const Terminal * Unary::gen_ir(int label_in, int label_out, int label_ret, TempV
             p_quad_table->add("=", arg, "", (Expr::get_temp_variable())->to_string());
             break;
         default:
-            throw new SynTreeException("Illegal unary operator");
+            throw new SynTreeException("Illegal unary operator", SynNode::get_line());
             break;
     }
 

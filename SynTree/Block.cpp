@@ -1,18 +1,18 @@
 #include "Block.h"
+#include "Func.h"
+#include "SynTreeException.h"
 #include <iostream>
 #include <vector>
-#include "Func.h"
 #include <iostream>
 
-Block::Block(int line): SynNode(line, SynNode::BLOCK)
-{}
+Block::Block(int line): SynNode(line, SynNode::BLOCK) {}
 
 Block::Block(Block * that, int line, SynNode::node_type_set node_type): SynNode(line, node_type)
 {
     this->content_ = that->content_;
     this->sub_programs_.swap((that->sub_programs_));
     // 将block子节点保存过来后还需要设置前驱
-    for(std::vector<SynNode *>::iterator it = this->sub_programs_.begin(); 
+    for(std::vector<SynNode *>::iterator it = this->sub_programs_.begin();
         it != this->sub_programs_.end(); it++)
         (*it)->set_prev(this);
     
@@ -79,6 +79,27 @@ const Terminal * Block::gen_ir(int label_in, int label_out, int label_ret, TempV
             (this->sub_programs_)[i]->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
 
     // 因为block只能出现在函数体、if真情况等处，可以返回NULL
+    return NULL;
+}
+
+Func * Block::get_func(std::string func_name)
+{
+    if (this->content_ != "root")
+        throw new SynTreeException("wrong use in function call, this node isn't root node"
+            , SynNode::get_line());
+    
+    for (int i = 0; i < this->sub_programs_.size(); i++)
+    {
+        // 先判断是否是Func节点
+        if (this->sub_programs_[i]->get_node_type() == SynNode::FUNC)
+        {
+            // 再判断函数名是否相同
+            if(((Func *) this->sub_programs_[i])->get_func_name() == func_name)
+                return (Func *) this->sub_programs_[i];
+        }
+    }
+
+    // 没找到返回NULL
     return NULL;
 }
 

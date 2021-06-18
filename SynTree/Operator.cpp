@@ -77,7 +77,7 @@ std::string Operator::to_string()
             ret = "||";
             break;
         default:
-            throw new SynTreeException("Illegal operator type");
+            throw new SynTreeException("Illegal operator type", -1);
             break;
     }
 

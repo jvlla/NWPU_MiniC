@@ -19,16 +19,17 @@ const Terminal * Return::gen_ir(int label_in, int label_out, int label_ret, Temp
 {
     // 如果label_ret为-1未被设置，即return语句位于函数外（应该不可能）或函数翻译有误
     if (label_ret == -1)
-        throw new SynTreeException("return statement in wrong place or wrong function translation");
+        throw new SynTreeException("return statement in wrong place or wrong function translation"
+            , SynNode::get_line());
     const Terminal * terminal_ret;
     std::string ret_val;
 
     // 如果单独return; 但函数非void
     if (this->p_ret_value_ == NULL && temp_ret != NULL)
-        throw new SynTreeException("return nothing but isn't void function");
+        throw new SynTreeException("return nothing but isn't void function", SynNode::get_line());
     // 如果return xxx; 但函数为void
     else if (this->p_ret_value_ != NULL && temp_ret == NULL)
-        throw new SynTreeException("return expr in void function");
+        throw new SynTreeException("return expr in void function", SynNode::get_line());
     // 如果return; 函数为void 什么也不做
     else if (this->p_ret_value_ == NULL && temp_ret == NULL)
         {}

@@ -59,7 +59,8 @@ G[<program>]:
 <rop> → <incr> | <decr>
 <incr> → '++'
 <decr> → '--'
-<elem> → ident <idexpr> | '(' <expr> ')' | <literal>
+// 只对一维数组进行加减乘除，吓死我了 所以就离谱啊，能定义高维数组但用不了，测试用例啥情况……
+<elem> → ident <idexpr> | '(' <expr> ')' | <literal>  
 <idexpr> → '[' <expr> ']' | '(' <realarg> ')' | ε
 <literal> → num
 <realarg> → <arg> {',' <arg>} | ε

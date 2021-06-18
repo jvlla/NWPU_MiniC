@@ -15,6 +15,8 @@ class SymTable
     bool isExist(std::string name);
     // 返回变量名对应的变量id
     int get_id(std::string name);
+    // 返回变量id对应的变量名
+    std::string get_name(int id);
     // 返回变量名对应的类型的指针
     Type * get_p_type(std::string name);
     // 将符号表输出到文件

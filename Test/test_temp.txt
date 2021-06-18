@@ -1,16 +1,15 @@
-void test(int x, int y, int z)
+int test(int x, int y, int z)
 {
     int g;
-g = 1;
+    g = 1;
 
-return;
+    return g;
 }
 
 int main()
 {
     int a,b,c,d;
     
-    a = b=0;
     while(a < 5)
     {
         a++;
@@ -18,4 +17,6 @@ int main()
         break;
         continue;
     }
+
+    d = test(1,2,3);
 }

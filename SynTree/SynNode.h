@@ -13,8 +13,9 @@ class SynNode
 {
   public:
     // 存储节点类型的枚举类型，用于get_node_type()返回
+    // 增加了新的还要记得在.cpp的gen_graph()的switch也加一下
     enum node_type_set {EXPR, OP, UNARY, TERMINAL, VARIABLE, CONSTANT, TEMP_VARIABLE,
-        BLOCK, STMT, IF, ELSE, WHILE, BREAK, CONTINUE, RETURN, FUNC};
+        BLOCK, STMT, IF, ELSE, WHILE, BREAK, CONTINUE, RETURN, FUNC, FUNC_CALL};
 
     // 注意，每个构造函数都要调用传递过来的节点的set_prev()函数设定前驱
     SynNode(int line, node_type_set node_type);
@@ -31,8 +32,10 @@ class SynNode
     // label == -1时是异常值，比如最开始无处可跳的时候就可以用，但应该不用判断，正常情况传不到if这种能用到的地方
     virtual const Terminal * gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
         QuadTable * p_quad_table) const = 0;
+    // 返回节点行号
+    int get_line() const;
     // 返回节点类型枚举变量
-    node_type_set get_node_type();
+    node_type_set get_node_type() const;
   protected:
     // 被gen_graph()调用，产生图中节点连线
     void emit_link(std::ofstream * p_fout) const; 

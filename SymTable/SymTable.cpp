@@ -10,7 +10,7 @@ SymTable::SymTable() {}
 int SymTable::put(std::string name, Type * p_type, int line)
 {
     if (this->isExist(name))
-        throw new SymTableException("deplicated " + name);
+        throw new SymTableException("deplicated " + name, -1);
     
     int id_new = this->s_id_;
     s_id_++;
@@ -42,7 +42,15 @@ int SymTable::get_id(std::string name)
     }
 
     // 没有抛出异常
-    throw new SymTableException("unexisted " + name);
+    throw new SymTableException("unexisted " + name, -1);
+}
+
+std::string SymTable::get_name(int id)
+{
+    if (id < 0 || id > this->elems.size())
+        throw new SymTableException("illeagle variable id " + std::to_string(id), -1);
+    
+    return this->elems[id].name;
 }
 
 // 返回变量名对应的类型的指针
@@ -55,7 +63,7 @@ Type * SymTable::get_p_type(std::string name)
     }
 
     // 没有抛出异常
-    throw new SymTableException("unexisted " + name);
+    throw new SymTableException("unexisted " + name, -1);
 }
 
 void SymTable::gen_table(std::ofstream * p_fout)

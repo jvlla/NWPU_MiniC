@@ -76,7 +76,7 @@ const Terminal * Op::gen_ir(int label_in, int label_out, int label_ret, TempVari
                 quad_if_else(arg_1, arg_2, result, "JNE", p_quad_table);
                 break;
             default:
-                throw new SynTreeException("Illegal unary operator");
+                throw new SynTreeException("Illegal unary operator", SynNode::get_line());
                 break;
         }
     }

@@ -40,9 +40,16 @@ struct def_vars {
     char *p_names[VARS_SIZE];  // 最多10个不同变量名
 };
 
+struct var_params {
+    bool is_func_call;  // 函数调用或数组调用
+    union
+    {
+        SynNode *p_params_nodes[PARAMS_SIZE];  // 存储了临时变量的指针数组
+    };
+};
+
 // 所有接收的指向节点的指针都必须是SynNode *, 因为进来的不一定是Op还是Variable等节点
 // 返回的节点根据情况可以具体一些，不必须是SynNode *
-
 // 接收指向Operator, SynNode, 结构体的指针，返回指向结构体的指针和行号
 // 结构体中包含操作符，类似 + a 的意思
 struct operator_node * operator_node_struct
