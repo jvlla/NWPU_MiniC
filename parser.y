@@ -23,6 +23,8 @@ extern SynTree syn_tree;
     Operator * p_operator;
     struct def * p_def;  // 传递函数、变量声明结构体
     struct def_vars * p_def_vars;  // 传递变量声明结构体
+    struct single_def_var * p_singel_def_var;  // 传递单个变量定义的结构
+    int * p_arr_limit;  // 传递int维度的数组
     struct var_params * p_var_params;  // 传递变量参数的结构体，面对如a[1], b(2, 3)这样的情况
     If * p_if;
     Else * p_else;
@@ -52,7 +54,8 @@ extern SynTree syn_tree;
 %type<p_def> Segment Def Idtail
 %type<p_type> Type
 %type<p_def_vars> Deflist
-%type<name> Defdata
+%type<p_singel_def_var> Defdata
+%type<p_arr_limit> Vardef
 /* 函数参数 */
 %type<p_params_def> Para Oneparas
 %type<id> Onepara
@@ -65,7 +68,6 @@ extern SynTree syn_tree;
 %type<p_block> Subprogram
 %type<p_def_vars> Localdef
 %type<p_node> Onestatement
-%type<p_node> Vardef 
 /* 语句部分 */
 %type<p_node> Statement Breakstat Continuestat Returnstat Assignstat Emptystat Whilestat
 %type<p_if> Ifstat
@@ -129,20 +131,31 @@ Segment         :  Type Def
                         if ($2->is_var_def)
                         {
                             struct def_vars * p_def_vars = $2->p_def_vars;
-                            // 这个简化了，实际应该考虑数组Type什么的
-                            // 倒叙遍历，因为变量放的时候是从后往前的
+                            struct single_def_var * p_singel_def_var;
 
+                            // 倒叙遍历，因为变量放的时候是从后往前的
                             for (int i = VARS_SIZE - 1; i >= 0; i--)
                             {
-                                cout << "here10" << endl;
-                                if (p_def_vars->p_names[i] != NULL)
+                                if (p_def_vars->p_single_def_vars[i] != NULL)
                                 {
-                                    cout << "in" << endl;
-                                    sym_table.put(p_def_vars->p_names[i], $1, yylineno);
+                                    p_singel_def_var = p_def_vars->p_single_def_vars[i];
+                                    // 如果是普通变量声明
+                                    if (p_singel_def_var->dim_limit[0] == -1)
+                                    {
+                                        sym_table.put(p_singel_def_var->p_name, $1, yylineno);
+                                    }
+                                    else
+                                    {
+                                        Array * p_array = new Array(p_singel_def_var->dim_limit);
+                                        sym_table.put(p_singel_def_var->p_name, p_array, yylineno);
+                                    }
+
                                     // 因为符号表put实际上是创建了新的string对象，所以可以释放
-                                    free(p_def_vars->p_names[i]);
+                                    free(p_singel_def_var->p_name);
+                                    free(p_def_vars->p_single_def_vars[i]);
                                 }
                             }
+
                             // 释放数组
                             free(p_def_vars);
                         }
@@ -187,17 +200,16 @@ Def             :  '*' IDENT Deflist
                             struct def_vars * p_def_vars = $2->p_def_vars;
                             for (int i = 0; i < VARS_SIZE; i++)
                             {
+                                if (p_def_vars->p_single_def_vars[i]->p_name == NULL)
+                                {
+                                    $2->p_def_vars->p_single_def_vars[i]->p_name = $1;
+                                    break;
+                                }
                                 // 如果变量声明已达到VARS_SIZE限制大小，报错抛出异常
-                                if (i == VARS_SIZE - 1 && p_def_vars->p_names[i] != NULL)
+                                if (i == VARS_SIZE - 1 && p_def_vars->p_single_def_vars[i] != NULL)
                                     throw new ParserException(
                                         "The number of variable eclaration exceed limit " 
                                         + to_string(VARS_SIZE), yylineno);
-                                if (p_def_vars->p_names[i] == NULL)
-                                {
-                                    p_def_vars->p_names[i] = $1;
-                                    // 放入变量名，退出循环
-                                    break;
-                                }
                             }
                         }
                         else
@@ -209,47 +221,93 @@ Def             :  '*' IDENT Deflist
 
 Deflist         :  ',' Defdata Deflist
                     {
-                        // 如果当前是最后一个变量声明
-                        if ($3 == NULL)
+                        // // 如果当前是最后一个变量声明
+                        // if ($3 == NULL)
+                        // {
+                        //     // 创建返回定义变量定义的结构体
+                        //     struct def_vars * p_def_vars = new struct def_vars();
+                        //     // 将变量名指针数字全部初始化为NULL
+                        //     for (int i = 0; i < VARS_SIZE; i++)
+                        //         p_def_vars->p_names[i] = NULL;
+                        //     p_def_vars->p_names[0] = $2;
+                        //     $$ = p_def_vars;
+                        // }
+                        // // 如果后面还跟着其它变量声明
+                        // else
+                        // {
+                        //     // 变量变量名指针数组，在最后放入当前变量名
+                        //     for (int i = 0; i < VARS_SIZE; i++)
+                        //     {
+                        //         // 如果变量声明已达到VARS_SIZE限制大小，报错抛出异常
+                        //         if (i == VARS_SIZE - 1 && $3->p_names[i] != NULL)
+                        //             throw new ParserException(
+                        //                 "The number of variable eclaration exceed limit " 
+                        //                 + to_string(VARS_SIZE), yylineno);
+                        //         if ($3->p_names[i] == NULL)
+                        //         {
+                        //             $3->p_names[i] = $2;
+                        //             // 放入变量名，退出循环
+                        //             break;
+                        //         }
+                        //     }
+                        //     $$ = $3;
+                        // }
+                        struct def_vars * p_def_vars;
+
+                        if($3 == NULL)
                         {
-                            // 创建返回定义变量定义的结构体
-                            struct def_vars * p_def_vars = new struct def_vars();
-                            // 将变量名指针数字全部初始化为NULL
+                            p_def_vars = new struct def_vars();
                             for (int i = 0; i < VARS_SIZE; i++)
-                                p_def_vars->p_names[i] = NULL;
-                            p_def_vars->p_names[0] = $2;
-                            $$ = p_def_vars;
+                                p_def_vars->p_single_def_vars[i] = NULL;
                         }
-                        // 如果后面还跟着其它变量声明
                         else
+                            p_def_vars = $3;
+                        // 放入新参数
+                        for (int i = 0; i < VARS_SIZE; i++)
                         {
-                            // 变量变量名指针数组，在最后放入当前变量名
-                            for (int i = 0; i < VARS_SIZE; i++)
+                            if (p_def_vars->p_single_def_vars[i] == NULL)
                             {
-                                // 如果变量声明已达到VARS_SIZE限制大小，报错抛出异常
-                                if (i == VARS_SIZE - 1 && $3->p_names[i] != NULL)
-                                    throw new ParserException(
-                                        "The number of variable eclaration exceed limit " 
-                                        + to_string(VARS_SIZE), yylineno);
-                                if ($3->p_names[i] == NULL)
-                                {
-                                    $3->p_names[i] = $2;
-                                    // 放入变量名，退出循环
-                                    break;
-                                }
+                                p_def_vars->p_single_def_vars[i] = $2;
+                                break;
                             }
-                            $$ = $3;
+                            // 变量数达到上限
+                            if (p_def_vars->p_single_def_vars[i] != NULL && i == VARS_SIZE - 1)
+                                throw new ParserException("too many variables", yylineno);
                         }
-                        parser_tracker("Deflist , Defdata Deflist");
+
+                        $$ = p_def_vars;
+                        parser_tracker("Deflist, Defdata Deflist");
                     }
                 | ';' 
                     { $$ = NULL; };
 
-// 当前假设只有简单的变量，没有数组什么，只返回char *
+// 假设只有普通变量和数组变量
 Defdata         :  IDENT Vardef
                     {
-                        if ($2 == NULL)
-                            $$ = $1;
+                        struct single_def_var * p_singel_def_var = new struct single_def_var();
+                        int dims_num = 0;  // 用于逆序数组维度
+
+                        p_singel_def_var->p_name = $1;
+                        for (int i = 0; i < ARR_SIZE; i++)
+                                p_singel_def_var->dim_limit[i] = -1;
+                        
+                        if ($2 != NULL)
+                        {
+                            // 先逆序维度
+                            for (int i = 0; i < ARR_SIZE; i++)
+                            {
+                                if($2[i] != -1)
+                                    dims_num++;
+                                else
+                                    break;
+                            }
+                            for (int i = 0; i < dims_num; i++)
+                                p_singel_def_var->dim_limit[i] = $2[dims_num - 1 - i];
+
+                            free $2;
+                        }
+
+                        $$ = p_singel_def_var;
                         parser_tracker("Defdata IDENT Vardef");
                     }
                 |  '*' IDENT
@@ -259,56 +317,87 @@ Defdata         :  IDENT Vardef
 
 Vardef          : 
                     { 
-                        // cout << "here1" << endl;
                         $$ = NULL; 
                     }
                 |  '[' NUM ']' Vardef  // Vardef在后面写正好递归返回构建树一样的数组
                     {
+                        int * p_arr_limit;
+
+                        // 如果是最后一个参数，创建维度数组
+                        if ($4 == NULL)
+                        {
+                            p_arr_limit = (int *) malloc(ARR_SIZE * sizeof(int));
+                            for (int i = 0; i < ARR_SIZE; i++)
+                                p_arr_limit[i] = -1;
+                        }
+                        else
+                            p_arr_limit = $4;
+
+                        // 放入新参数
+                        for(int i = 0; i < ARR_SIZE; i++)
+                        {
+                            if(p_arr_limit[i] == -1)
+                            {
+                                p_arr_limit[i] = $2;
+                                break;
+                            }
+
+                            // 如果数组维度到达上限，抛出异常
+                            if(p_arr_limit[i] != -1 && i == ARR_SIZE - 1)
+                                throw new ParserException("too many array dimensions", yylineno);
+                        }
+                        
+                        $$ = p_arr_limit;
                         parser_tracker("Vardef");
                     }
 
 Idtail          :  Vardef Deflist
                     {
-                        // cout << "here2" << endl;
                         // 这里和Deflist的情况还不一样，因为Idetail的产生式中第一个是Vardef，
                         // Deflist的产生式中第一个是Defdata，其中可能包含Vardef
-                        // 先忽略Vardef，即假设没有数组，后面要补上-----------------------------
                         struct def * p_def = new struct def();
+                        struct def_vars * p_def_vars;
+                        struct single_def_var * p_singel_def_var;
+                        int dims_num;
 
                         p_def->is_var_def = true;
                         if ($2 == NULL)
                         {
-                            cout << "here3" << endl;
-                            // 后面没有定义也要创建def_vars结构，因为到Def产生式必定有变量被声明
-                            struct def_vars * p_def_vars = new struct def_vars();
+                            p_def_vars = new struct def_vars();
                             for (int i = 0; i < VARS_SIZE; i++)
-                            {
-                                // cout << "here4" << endl;
-                                (p_def_vars->p_names)[i] = NULL;
-                            }
-                            // cout << "here5" << endl;
-                            p_def->p_def_vars = p_def_vars;
+                                p_def_vars->p_single_def_vars[i] = NULL;
                         }
                         else
+                            p_def_vars = $2;
+                        // 放入新参数
+                        for (int i = 0; i < VARS_SIZE; i++)
                         {
-                            // 先注释，之后还要添加存Vardef数组维度的数组，方法差不多
-                            // // 变量变量名指针数组，在最后放入当前变量名
-                            // for (int i = 0; i < VARS_SIZE; i++)
-                            // {
-                            //     // 如果变量声明已达到VARS_SIZE限制大小，报错抛出异常
-                            //     if (i == VARS_SIZE - 1 && $2->p_names[i] != NULL)
-                            //         throw new ParserException(
-                            //             "The number of variable eclaration exceed limit " 
-                            //             + to_string(VARS_SIZE), yylineno);
-                            //     if ($3->p_names[i] == NULL)
-                            //     {
-                            //         $2->p_names[i] = $1;
-                            //         // 放入变量名，退出循环
-                            //         break;
-                            //     }
-                            // }
-                            p_def->p_def_vars = $2;
+                            if (p_def_vars->p_single_def_vars[i] == NULL)
+                            {
+                                p_singel_def_var = new struct single_def_var();
+                                p_singel_def_var->p_name = NULL;
+                                for (int i = 0; i < ARR_SIZE; i++)
+                                    p_singel_def_var->dim_limit[i] = -1;
+                                // 先逆序维度
+                                for (int i = 0; i < ARR_SIZE; i++)
+                                {
+                                    if($1[i] != -1)
+                                        dims_num++;
+                                    else
+                                        break;
+                                }
+                                for (int i = 0; i < dims_num; i++)
+                                    p_singel_def_var->dim_limit[i] = $1[dims_num - 1 - i];
+                                free $1;
+                                p_def_vars->p_single_def_vars[i] = p_singel_def_var;
+
+                                break;
+                            }
+                            // 变量数达到上限
+                            if (p_def_vars->p_single_def_vars[i] != NULL && i == VARS_SIZE - 1)
+                                throw new ParserException("too many variables", yylineno);
                         }
+                        p_def->p_def_vars = p_def_vars;
 
                         $$ = p_def;
                         parser_tracker("Idtail Vardef Deflist");
@@ -515,45 +604,51 @@ Onestatement    : Localdef
 Localdef        : Type Defdata Deflist
                     {
                         struct def_vars * p_def_vars;
+                        struct single_def_var * p_singel_def_var;
 
                         // 如果仅有一个变量声明，仍要创建一个结构体，统一形式嘛
                         if ($3 == NULL)
                         {
                             // 创建返回定义变量定义的结构体
                             p_def_vars = new struct def_vars();
-                            // 将变量名指针数字全部初始化为NULL
                             for (int i = 0; i < VARS_SIZE; i++)
-                                p_def_vars->p_names[i] = NULL;
-                            p_def_vars->p_names[0] = $2;
-                            $$ = p_def_vars;
+                                p_def_vars->p_single_def_vars[i] = NULL;
                         }
-                        // 否则已经把变量放到已经存在的结构体就好
                         else
-                        {
-                            for (int i = 0; i < VARS_SIZE; i++)
-                            {
-                                // 如果变量声明已达到VARS_SIZE限制大小，报错抛出异常
-                                if (i == VARS_SIZE - 1 && $3->p_names[i] != NULL)
-                                    throw new ParserException(
-                                        "The number of variable eclaration exceed limit " 
-                                        + to_string(VARS_SIZE), yylineno);
-                                if ($3->p_names[i] == NULL)
-                                {
-                                    $3->p_names[i] = $2;
-                                    // 放入变量名，退出循环
-                                    break;
-                                }
-                            }
                             p_def_vars = $3;
+
+                        for (int i = 0; i < VARS_SIZE; i++)
+                        {
+                            if (p_def_vars->p_single_def_vars[i] == NULL)
+                            {
+                                p_def_vars->p_single_def_vars[i] = $2;
+                                break;
+                            }
+                            // 变量数达到上限
+                            if (p_def_vars->p_single_def_vars[i] != NULL && i == VARS_SIZE - 1)
+                                throw new ParserException("too many variables", yylineno);
                         }
 
                         for (int i = VARS_SIZE - 1; i >= 0; i--)
                         {
-                            if (p_def_vars->p_names[i] != NULL)
+                            if (p_def_vars->p_single_def_vars[i] != NULL)
                             {
-                                sym_table.put(p_def_vars->p_names[i], $1, yylineno);
+                                p_singel_def_var = p_def_vars->p_single_def_vars[i];
+
+                                // 如果是普通变量声明
+                                if (p_singel_def_var->dim_limit[0] == -1)
+                                {
+                                    sym_table.put(p_singel_def_var->p_name, $1, yylineno);
+                                }
+                                else
+                                {
+                                    Array * p_array = new Array(p_singel_def_var->dim_limit);
+                                    sym_table.put(p_singel_def_var->p_name, p_array, yylineno);
+                                }
+
                                 // 因为符号表put实际上是创建了新的string对象，所以可以释放
-                                free(p_def_vars->p_names[i]);
+                                free(p_singel_def_var->p_name);
+                                free(p_def_vars->p_single_def_vars[i]);
                             }
                         }
                         // 释放数组
@@ -914,9 +1009,6 @@ Realarg         :  // 这是不是也可能有问题
                         struct var_params * p_var_params, * p_var_params_order;
                         int params_num = 0;
 
-                        if ($2->p_params_nodes[0] == NULL)
-                            cout << "wrong at first" << endl;
-
                         if ($2 == NULL)
                         {
                             p_var_params = new struct var_params();
@@ -931,12 +1023,7 @@ Realarg         :  // 这是不是也可能有问题
                         {
                             if (p_var_params->p_params_nodes[i] == NULL)
                             {
-                                cout << "in" << endl;
                                 p_var_params->p_params_nodes[i] = $1;
-                                if($1 != NULL)
-                                    cout << "yes111-------------" << endl;
-                                if(p_var_params->p_params_nodes[i] != NULL)
-                                    cout << "yesinininininiiini-------------" << endl;
                                 break;
                             }
                             // 如果变量数已达到上限，抛出异常

@@ -17,7 +17,6 @@ FuncCall::FuncCall(std::string func_name, SynNode *p_params_nodes[PARAMS_SIZE]
     p_params_id = this->p_func_type_->get_params_type();
     for (int i = 0; i < PARAMS_SIZE; i++)
     {
-        std::cout << i << std::endl;
         this->p_params_nodes_[i] = p_params_nodes[i];
         // 当两边都没有值，什么都不用做
         if (p_params_id[i] == -1 && this->p_params_nodes_[i] == NULL)

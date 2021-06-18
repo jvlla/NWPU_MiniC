@@ -1,8 +1,9 @@
 #include "Array.h"
 
-Array::Array(type_set type, int * limit): Type(type)
+Array::Array(int * limit): Type(Type::ARRAY)
 {
-    this->p_limit_ = limit;
+    for (int i = 0; i < ARR_SIZE; i++)
+        this->p_limit_[i] = limit[i];
 }
 
 // 用于在使用变量时判断使用是否合法

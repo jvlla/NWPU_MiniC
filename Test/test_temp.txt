@@ -9,6 +9,7 @@ int test(int x, int y, int z)
 int main()
 {
     int a,b,c,d;
+    int arr[1][2];
     
     while(a < 5)
     {

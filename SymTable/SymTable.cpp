@@ -82,7 +82,7 @@ void SymTable::gen_table(std::ofstream * p_fout)
                 type = "void\t\t";  
                 break;
             case Type::ARRAY:
-                type = "int array\t"; 
+                type = "int array" + elems[i].p_type->get_type_content() + "\t"; 
                 break;
             case Type::FUNC_INT:
                 type = "int function\t"; 

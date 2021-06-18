@@ -15,7 +15,7 @@ Variable::Variable(std::string name, int * limit, SymTable * p_sym_table, int li
 {
     if (!p_sym_table->isExist(name))
         throw new SynTreeException("undefined variable " + name, SynNode::get_line());
-    Type * p_type_new = new Array(Type::ARRAY, limit);
+    Type * p_type_new = new Array(limit);
     if (!p_type_new->isLegal(p_sym_table->get_p_type(name)))
         throw new SynTreeException("illegal type variable " + name, SynNode::get_line());
     

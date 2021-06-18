@@ -35,9 +35,15 @@ struct def_func {
 };
 
 // 传递变量定义结构体
-// 肯定将来还要为了指针、数组改
+// 肯定将来还要为了指针改
 struct def_vars {
-    char *p_names[VARS_SIZE];  // 最多10个不同变量名
+    struct single_def_var *p_single_def_vars[VARS_SIZE];
+};
+
+// 传递单个变量定义的结构体
+struct single_def_var {
+    char * p_name;
+    int dim_limit[ARR_SIZE];
 };
 
 struct var_params {
