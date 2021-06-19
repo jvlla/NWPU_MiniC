@@ -1,5 +1,7 @@
 #include "Op.h"
 #include "SynTreeException.h"
+#include "Variable.h"
+#include <iostream>
 
 Op::Op(SynNode * p_first, SynNode * p_second, Operator * p_operator, int line): Expr(line, SynNode::OP)
 {
@@ -19,7 +21,7 @@ void Op::gen_graph(std::ofstream * p_fout) const
 }
 
 const Terminal * Op::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
-    QuadTable * p_quad_table) const
+    QuadTable * p_quad_table)
 {
     const Terminal * ret_terminal_1, * ret_terminal_2;  // 子节点返回对象
     std::string arg_1, arg_2, result;  // 输出到四元式的字符串
@@ -39,21 +41,223 @@ const Terminal * Op::gen_ir(int label_in, int label_out, int label_ret, TempVari
         {
             // 加减乘除、赋值类似，无需进行跳转，顺序执行
             case Operator::BINARY_ASSIGN:
-                p_quad_table->add("=", arg_2, "", arg_1);
-                p_quad_table->add("=", "1", "", result);
+                // 如果两边都是一维数组
+                // 其实不应该一次性判断是Variable节点和是array型的Variable节点，因为求值顺序不一定，
+                // 强制类型转换可能会出错，不过没那么严谨了，方便一点
+                if ((ret_terminal_1->get_node_type() == SynNode::VARIABLE
+                    && ret_terminal_2->get_node_type() == SynNode::VARIABLE)
+                    && (((Variable *) ret_terminal_1)->is_arr() && ((Variable *) ret_terminal_2)->is_arr()))
+                {
+                    TempVariable * p_new_temp = new TempVariable(SynNode::get_line());
+
+                    // a = b[c] 翻译为 (=[], b[c], -, a), 见曾老师PPT Ch05-5
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_2)->get_name() + "[" + ((Variable *) ret_terminal_2)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp->to_string());
+                    // b[c] = a 翻译为 ([]=, a, -, b[c])
+                    p_quad_table->add("[]=", p_new_temp->to_string(), ""
+                        , ((Variable *) ret_terminal_1)->get_name() + "[" + ((Variable *) ret_terminal_1)->get_dim_terminal()->to_string() + "]");
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_1)->get_name() + "[" + ((Variable *) ret_terminal_1)->get_dim_terminal()->to_string() + "]"
+                        , "", result);
+                }
+                // 如果左边是一维数组
+                else if (ret_terminal_1->get_node_type() == SynNode::VARIABLE
+                    && ((Variable *) ret_terminal_1)->is_arr())
+                {
+                    p_quad_table->add("[]=", arg_2, ""
+                        , ((Variable *) ret_terminal_1)->get_name() + "[" + ((Variable *) ret_terminal_1)->get_dim_terminal()->to_string() + "]");
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_1)->get_name() + "[" + ((Variable *) ret_terminal_1)->get_dim_terminal()->to_string() + "]"
+                        , "", result);
+                }
+                // 如果右边是一维数组
+                else if (ret_terminal_2->get_node_type() == SynNode::VARIABLE
+                    && ((Variable *) ret_terminal_2)->is_arr())
+                {
+                    TempVariable * p_new_temp = new TempVariable(SynNode::get_line());
+
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_2)->get_name() + "[" + ((Variable *) ret_terminal_2)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp->to_string());
+                    p_quad_table->add("=", p_new_temp->to_string(), "", arg_1);
+                    p_quad_table->add("=", arg_1, "", result);
+                }
+                // 如果两边都不是数组
+                else
+                {
+                    p_quad_table->add("=", arg_2, "", arg_1);
+                    p_quad_table->add("=", arg_1, "", result);
+                }
                 break;
             case Operator::BINARY_ADD:
-                p_quad_table->add("+", arg_1, arg_2, result);
+                // 如果两边都是一维数组
+                if ((ret_terminal_1->get_node_type() == SynNode::VARIABLE
+                    && ret_terminal_2->get_node_type() == SynNode::VARIABLE)
+                    && (((Variable *) ret_terminal_1)->is_arr() && ((Variable *) ret_terminal_2)->is_arr()))
+                {
+                    TempVariable * p_new_temp_1 = new TempVariable(SynNode::get_line());
+                    TempVariable * p_new_temp_2 = new TempVariable(SynNode::get_line());
+
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_1)->get_name() + "[" + ((Variable *) ret_terminal_1)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp_1->to_string());
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_2)->get_name() + "[" + ((Variable *) ret_terminal_2)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp_2->to_string());
+                    p_quad_table->add("+", p_new_temp_1->to_string(), p_new_temp_2->to_string(), result);
+                }
+                // 如果左边是一维数组
+                else if (ret_terminal_1->get_node_type() == SynNode::VARIABLE
+                    && ((Variable *) ret_terminal_1)->is_arr())
+                {
+                    TempVariable * p_new_temp= new TempVariable(SynNode::get_line());
+
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_1)->get_name() + "[" + ((Variable *) ret_terminal_1)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp->to_string());
+                    p_quad_table->add("+", p_new_temp->to_string(), arg_2, result);
+                }
+                // 如果右边是一维数组
+                else if (ret_terminal_2->get_node_type() == SynNode::VARIABLE
+                    && ((Variable *) ret_terminal_2)->is_arr())
+                {
+                    TempVariable * p_new_temp= new TempVariable(SynNode::get_line());
+
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_2)->get_name() + "[" + ((Variable *) ret_terminal_2)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp->to_string());
+                    p_quad_table->add("+", arg_1, p_new_temp->to_string(), result);
+                }
+                else
+                    p_quad_table->add("+", arg_1, arg_2, result);
                 break; 
             case Operator::BINARY_SUB:
-                p_quad_table->add("-", arg_1, arg_2, result);
-                break;
+                // 如果两边都是一维数组
+                if ((ret_terminal_1->get_node_type() == SynNode::VARIABLE
+                    && ret_terminal_2->get_node_type() == SynNode::VARIABLE)
+                    && (((Variable *) ret_terminal_1)->is_arr() && ((Variable *) ret_terminal_2)->is_arr()))
+                {
+                    TempVariable * p_new_temp_1 = new TempVariable(SynNode::get_line());
+                    TempVariable * p_new_temp_2 = new TempVariable(SynNode::get_line());
+
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_1)->get_name() + "[" + ((Variable *) ret_terminal_1)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp_1->to_string());
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_2)->get_name() + "[" + ((Variable *) ret_terminal_2)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp_2->to_string());
+                    p_quad_table->add("-", p_new_temp_1->to_string(), p_new_temp_2->to_string(), result);
+                }
+                // 如果左边是一维数组
+                else if (ret_terminal_1->get_node_type() == SynNode::VARIABLE
+                    && ((Variable *) ret_terminal_1)->is_arr())
+                {
+                    TempVariable * p_new_temp= new TempVariable(SynNode::get_line());
+
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_1)->get_name() + "[" + ((Variable *) ret_terminal_1)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp->to_string());
+                    p_quad_table->add("-", p_new_temp->to_string(), arg_2, result);
+                }
+                // 如果右边是一维数组
+                else if (ret_terminal_2->get_node_type() == SynNode::VARIABLE
+                    && ((Variable *) ret_terminal_2)->is_arr())
+                {
+                    TempVariable * p_new_temp= new TempVariable(SynNode::get_line());
+
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_2)->get_name() + "[" + ((Variable *) ret_terminal_2)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp->to_string());
+                    p_quad_table->add("-", arg_1, p_new_temp->to_string(), result);
+                }
+                else
+                    p_quad_table->add("-", arg_1, arg_2, result);
+                break; 
             case Operator::BINARY_MUL:
-                p_quad_table->add("*", arg_1, arg_2, result);
-                break;
+                // 如果两边都是一维数组
+                if ((ret_terminal_1->get_node_type() == SynNode::VARIABLE
+                    && ret_terminal_2->get_node_type() == SynNode::VARIABLE)
+                    && (((Variable *) ret_terminal_1)->is_arr() && ((Variable *) ret_terminal_2)->is_arr()))
+                {
+                    TempVariable * p_new_temp_1 = new TempVariable(SynNode::get_line());
+                    TempVariable * p_new_temp_2 = new TempVariable(SynNode::get_line());
+
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_1)->get_name() + "[" + ((Variable *) ret_terminal_1)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp_1->to_string());
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_2)->get_name() + "[" + ((Variable *) ret_terminal_2)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp_2->to_string());
+                    p_quad_table->add("*", p_new_temp_1->to_string(), p_new_temp_2->to_string(), result);
+                }
+                // 如果左边是一维数组
+                else if (ret_terminal_1->get_node_type() == SynNode::VARIABLE
+                    && ((Variable *) ret_terminal_1)->is_arr())
+                {
+                    TempVariable * p_new_temp= new TempVariable(SynNode::get_line());
+
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_1)->get_name() + "[" + ((Variable *) ret_terminal_1)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp->to_string());
+                    p_quad_table->add("*", p_new_temp->to_string(), arg_2, result);
+                }
+                // 如果右边是一维数组
+                else if (ret_terminal_2->get_node_type() == SynNode::VARIABLE
+                    && ((Variable *) ret_terminal_2)->is_arr())
+                {
+                    TempVariable * p_new_temp= new TempVariable(SynNode::get_line());
+
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_2)->get_name() + "[" + ((Variable *) ret_terminal_2)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp->to_string());
+                    p_quad_table->add("*", arg_1, p_new_temp->to_string(), result);
+                }
+                else
+                    p_quad_table->add("*", arg_1, arg_2, result);
+                break; 
             case Operator::BINARY_DIV:
-                p_quad_table->add("/", arg_1, arg_2, result);
-                break;
+                // 如果两边都是一维数组
+                if ((ret_terminal_1->get_node_type() == SynNode::VARIABLE
+                    && ret_terminal_2->get_node_type() == SynNode::VARIABLE)
+                    && (((Variable *) ret_terminal_1)->is_arr() && ((Variable *) ret_terminal_2)->is_arr()))
+                {
+                    TempVariable * p_new_temp_1 = new TempVariable(SynNode::get_line());
+                    TempVariable * p_new_temp_2 = new TempVariable(SynNode::get_line());
+
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_1)->get_name() + "[" + ((Variable *) ret_terminal_1)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp_1->to_string());
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_2)->get_name() + "[" + ((Variable *) ret_terminal_2)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp_2->to_string());
+                    p_quad_table->add("/", p_new_temp_1->to_string(), p_new_temp_2->to_string(), result);
+                }
+                // 如果左边是一维数组
+                else if (ret_terminal_1->get_node_type() == SynNode::VARIABLE
+                    && ((Variable *) ret_terminal_1)->is_arr())
+                {
+                    TempVariable * p_new_temp= new TempVariable(SynNode::get_line());
+
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_1)->get_name() + "[" + ((Variable *) ret_terminal_1)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp->to_string());
+                    p_quad_table->add("/", p_new_temp->to_string(), arg_2, result);
+                }
+                // 如果右边是一维数组
+                else if (ret_terminal_2->get_node_type() == SynNode::VARIABLE
+                    && ((Variable *) ret_terminal_2)->is_arr())
+                {
+                    TempVariable * p_new_temp= new TempVariable(SynNode::get_line());
+
+                    p_quad_table->add("=[]"
+                        , ((Variable *) ret_terminal_2)->get_name() + "[" + ((Variable *) ret_terminal_2)->get_dim_terminal()->to_string() + "]"
+                        , "", p_new_temp->to_string());
+                    p_quad_table->add("/", arg_1, p_new_temp->to_string(), result);
+                }
+                else
+                    p_quad_table->add("/", arg_1, arg_2, result);
+                break; 
             // >, <, >=, <=, ==, != 六种类似，以>为例，类似if(arg_1 > arg_2) result = 1 else result = 0
             // 使用quad_if_else()函数
             // 这些与短路求值无关，就是正常的if else判断

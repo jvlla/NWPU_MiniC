@@ -7,15 +7,19 @@
 Return::Return(SynNode * p_ret_value, int line): Stmt(line, SynNode::RETURN)
 {
     this->p_ret_value_ = p_ret_value;
+    if (this->p_ret_value_ != NULL)
+        this->p_ret_value_->set_prev(this);
 }
 
 void Return::gen_graph(std::ofstream * p_fout) const
 {
     Stmt::gen_graph(p_fout);
+    if (this->p_ret_value_ != NULL)
+        this->p_ret_value_->gen_graph(p_fout);
 }
 
 const Terminal * Return::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
-    QuadTable * p_quad_table) const
+    QuadTable * p_quad_table)
 {
     // 如果label_ret为-1未被设置，即return语句位于函数外（应该不可能）或函数翻译有误
     if (label_ret == -1)

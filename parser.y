@@ -76,7 +76,7 @@ extern SynTree syn_tree;
 %type<p_node> Altexpr Expr Assexpr Orexpr Andexpr Cmpexpr
 %type<p_node> Aloexpr Item Factor Val Elem Literal
 %type<p_operator_node> Alotail Itemtail Cmptail Andtail Ortail Asstail
-/* 函数调用参数 */
+/*函数/数组调用参数*/
 %type<p_var_params> Idexpr Realarg Realargs
 %type<p_node> Arg
 /* 操作符 */
@@ -95,7 +95,7 @@ Program         : Segment
                             if ($1->p_def_func->p_body != NULL)
                             {
                                 Func * p_func = 
-                                    new Func($1->p_def_func->p_body, $1->p_def_func->p_type_func, $1->p_def_func->name, yylineno);
+                                    new Func($1->p_def_func->p_body, $1->p_def_func->p_type_func, $1->p_def_func->name, &sym_table, yylineno);
                                 syn_tree.get_root()->add_sub_program(p_func);
                                 $1->p_def_func->p_body->set_content($1->p_def_func->name);
                             }
@@ -105,7 +105,7 @@ Program         : Segment
                         }
 
                         free($1);
-                        parser_tracker("Program Segment");
+                        parser_tracker("Program->, Segment");
                     }
                 | Program Segment
                     {
@@ -113,7 +113,7 @@ Program         : Segment
                         if ($2->p_def_func->p_body != NULL)
                         {
                             Func * p_func = 
-                                new Func($2->p_def_func->p_body, $2->p_def_func->p_type_func, $2->p_def_func->name, yylineno);
+                                new Func($2->p_def_func->p_body, $2->p_def_func->p_type_func, $2->p_def_func->name, &sym_table, yylineno);
 
                             syn_tree.get_root()->add_sub_program(p_func);
                             $2->p_def_func->p_body->set_content($2->p_def_func->name);
@@ -121,7 +121,7 @@ Program         : Segment
 
                         free($2->p_def_func->name);
                         free($2->p_def_func);
-                        parser_tracker("Program Program Segment");
+                        parser_tracker("Program->, Program Segment");
                     };
 
 // --完成--
@@ -174,24 +174,24 @@ Segment         :  Type Def
                         }
 
                         $$ = $2;
-                        parser_tracker("Segment");
+                        parser_tracker("Segment->, Type Def");
                     };
 
 // --完成--
 Type            :  INT
                     {
                         $$ = new Type(Type::INT);
-                        parser_tracker("Type INT");
+                        parser_tracker("Type->, INT");
                     }
                 |  VOID
                     {
                         $$ = new Type(Type::VOID);
-                        parser_tracker("Type VOID");
+                        parser_tracker("Type->, VOID");
                     };
 
 Def             :  '*' IDENT Deflist
                     {
-                        parser_tracker("Def * IDENT Deflist");
+                        parser_tracker("Def-> * IDENT Deflist");
                     }
                 |  IDENT Idtail
                     {
@@ -216,7 +216,7 @@ Def             :  '*' IDENT Deflist
                             $2->p_def_func->name = $1;
 
                         $$ = $2;
-                        parser_tracker("Def IDENT Idtail");
+                        parser_tracker("Def-> IDENT Idtail");
                     };
 
 Deflist         :  ',' Defdata Deflist
@@ -276,7 +276,7 @@ Deflist         :  ',' Defdata Deflist
                         }
 
                         $$ = p_def_vars;
-                        parser_tracker("Deflist, Defdata Deflist");
+                        parser_tracker("Deflist-> Defdata Deflist");
                     }
                 | ';' 
                     { $$ = NULL; };
@@ -308,11 +308,11 @@ Defdata         :  IDENT Vardef
                         }
 
                         $$ = p_singel_def_var;
-                        parser_tracker("Defdata IDENT Vardef");
+                        parser_tracker("Defdata-> IDENT Vardef");
                     }
                 |  '*' IDENT
                     {
-                        parser_tracker("Defdata * IDENT");
+                        parser_tracker("Defdata-> * IDENT");
                     };
 
 Vardef          : 
@@ -348,7 +348,7 @@ Vardef          :
                         }
                         
                         $$ = p_arr_limit;
-                        parser_tracker("Vardef");
+                        parser_tracker("Vardef-> [ NUM ] Vardef");
                     }
 
 Idtail          :  Vardef Deflist
@@ -378,17 +378,20 @@ Idtail          :  Vardef Deflist
                                 p_singel_def_var->p_name = NULL;
                                 for (int i = 0; i < ARR_SIZE; i++)
                                     p_singel_def_var->dim_limit[i] = -1;
-                                // 先逆序维度
-                                for (int i = 0; i < ARR_SIZE; i++)
+                                if ($1 != NULL)
                                 {
-                                    if($1[i] != -1)
-                                        dims_num++;
-                                    else
-                                        break;
+                                    // 先逆序维度
+                                    for (int i = 0; i < ARR_SIZE; i++)
+                                    {
+                                        if($1[i] != -1)
+                                            dims_num++;
+                                        else
+                                            break;
+                                    }
+                                    for (int i = 0; i < dims_num; i++)
+                                        p_singel_def_var->dim_limit[i] = $1[dims_num - 1 - i];
+                                    free $1;
                                 }
-                                for (int i = 0; i < dims_num; i++)
-                                    p_singel_def_var->dim_limit[i] = $1[dims_num - 1 - i];
-                                free $1;
                                 p_def_vars->p_single_def_vars[i] = p_singel_def_var;
 
                                 break;
@@ -400,7 +403,7 @@ Idtail          :  Vardef Deflist
                         p_def->p_def_vars = p_def_vars;
 
                         $$ = p_def;
-                        parser_tracker("Idtail Vardef Deflist");
+                        parser_tracker("Idtail-> Vardef Deflist");
                     }
                 |  '(' Para ')' Functail
                     {
@@ -421,14 +424,14 @@ Idtail          :  Vardef Deflist
                                 p_def_func->param_ids[i] = -1;
 
                         $$ = p_def;
-                        parser_tracker("Idtail (Para) Functail");
+                        parser_tracker("Idtail-> (Para) Functail");
                     }
 
 // --完成--
 Functail        :  Blockstat
                     {
                         $$ = $1;
-                        parser_tracker("Functail Blockstat");
+                        parser_tracker("Functail-> Blockstat");
                     }
                 |  ';'
                     { $$ = NULL; };
@@ -479,7 +482,7 @@ Para            :           // 这个可能不对
                         free(p_params_def);
 
                         $$ = p_params_order;
-                        parser_tracker("Para");
+                        parser_tracker("Para-> Onepara Oneparas");
                     };
 
 Oneparas        :
@@ -511,41 +514,41 @@ Oneparas        :
                         }
                         
                         $$ = p_params_def;
-                        parser_tracker("Oneparas");
+                        parser_tracker("Oneparas-> , Onepara Oneparas");
                     };
 
 Onepara         : Type Paradata
                     {
                         $$ = sym_table.put($2, $1, yylineno);
-                        parser_tracker("Onepara");
+                        parser_tracker("Onepara-> Type Paradata");
                     };
 
 Paradata        : '*' IDENT
                     {
-                        parser_tracker("Paradata * IDENT");
+                        parser_tracker("Paradata-> * IDENT");
                     }
                 | IDENT Paradatatail
                     {
                         // 直接不考虑数组的情况
                         $$ = $1;
-                        parser_tracker("Paradata IDENT Paradatatail");
+                        parser_tracker("Paradata-> IDENT Paradatatail");
                     };
 
 Paradatatail    : '[' ']' Paradatatails  // 这个可能也有问题
                     {
-                        parser_tracker("Paradatatail [] Paradatatails");
+                        parser_tracker("Paradatatail-> [] Paradatatails");
                     }
                 | Paradatatails
                     {
                         $$ = $1;
-                        parser_tracker("Paradata Paradatatails");
+                        parser_tracker("Paradata-> Paradatatails");
                     };
 
 Paradatatails   :
                     { $$ = NULL; }
                 | '[' NUM ']' Paradatatails
                     {
-                        parser_tracker("Paradatatails");
+                        parser_tracker("Paradatatails-> [ NUM ] Paradatatails");
                     };
 
 // 以下是函数内部了
@@ -563,7 +566,7 @@ Subprogram      :
                         else
                             $$ = NULL;
                         
-                        parser_tracker("Subprogram Onestatement");
+                        parser_tracker("Subprogram-> Onestatement");
                     }
                 | Subprogram Onestatement
                     {
@@ -586,19 +589,19 @@ Subprogram      :
                                 // 如果既没有已经存在的Block，也没有新的节点，返回NULL
                                 $$ = NULL;
 
-                        parser_tracker("Subprogram Subprogram Onestatement");
+                        parser_tracker("Subprogram-> Subprogram Onestatement");
                     };
 
 // --完成--
 Onestatement    : Localdef 
                     {
                         $$ = NULL;
-                        parser_tracker("Onestatement Localdef");
+                        parser_tracker("Onestatement-> Localdef");
                     }
                 | Statement
                     {
                         $$ = $1;
-                        parser_tracker("Onestatement Statement");
+                        parser_tracker("Onestatement-> Statement");
                     };
 
 Localdef        : Type Defdata Deflist
@@ -655,7 +658,7 @@ Localdef        : Type Defdata Deflist
                         free(p_def_vars);
 
                         $$ = NULL;
-                        parser_tracker("Localdef");
+                        parser_tracker("Localdef-> Type Defdata Deflist");
                     }
 
 // 语句Stmt部分
@@ -663,77 +666,77 @@ Localdef        : Type Defdata Deflist
 Statement       : Whilestat
                     {
                         $$ = $1;
-                        parser_tracker("Statement Whilestat");
+                        parser_tracker("Statement-> Whilestat");
                     }
                 | Ifstat
                     {
                         $$ = $1;
-                        parser_tracker("Statement Ifstat");
+                        parser_tracker("Statement-> Ifstat");
                     }
                 | Breakstat
                     {
                         $$ = $1;
-                        parser_tracker("Statement Breakstat");
+                        parser_tracker("Statement-> Breakstat");
                     }
                 | Continuestat
                     {
                         $$ = $1;
-                        parser_tracker("Statement Continuestat");
+                        parser_tracker("Statement-> Continuestat");
                     }
                 | Returnstat
                     {
                         $$ = $1;
-                        parser_tracker("Statement Returnstat");
+                        parser_tracker("Statement-> Returnstat");
                     }
                 | Blockstat
                     {
                         $$ = $1;
-                        parser_tracker("Statement Blockstat");
+                        parser_tracker("Statement-> Blockstat");
                     }
                 | Assignstat
                     {
                         $$ = $1;
-                        parser_tracker("Statement Assignstat");
+                        parser_tracker("Statement-> Assignstat");
                     }
                 | Emptystat
                     {
                         $$ = $1;
-                        parser_tracker("Statement Emptystat");
+                        parser_tracker("Statement-> Emptystat");
                     };
 
 // --完成--
 Breakstat       : BREAK ';'
                     {
                         $$ = new Break(yylineno);
-                        parser_tracker("Breakstat");
+                        parser_tracker("Breakstat-> BREAK ;");
                     };
 
 // --完成--
 Continuestat    : CONTINUE ';'
                     {
                         $$ = new Continue(yylineno);
-                        parser_tracker("Continuestat");
+                        parser_tracker("Continuestat-> CONTINUE ;");
                     };
 
 // --完成--
 Returnstat      : RETURN Altexpr ';'
                     {
                         $$ = new Return($2, yylineno);
-                        parser_tracker("Returnstat");
+                        parser_tracker("Returnstat-> RETURN Altexpr ;");
                     };
 
 // --完成--
 Assignstat      : Altexpr ';'
                     {
                         $$ = $1;
-                        parser_tracker("Assignstat Altexpr ;");
+                        parser_tracker("Assignstat-> Altexpr ;");
                     };
 
 // --完成--
 Blockstat       : '{' Subprogram '}'
                     {
                         $$ = $2;
-                        parser_tracker("Blockstat Subprogram");
+                        parser_tracker("Blockstat-> { Subprogram }");
                     };
 
 // --完成--
@@ -743,8 +746,14 @@ Emptystat       : ';'
 // --完成--
 Whilestat       : WHILE '(' Expr ')' Statement
                     {
+                        // 当循环语句为空时
+                        if ($5 == NULL)
+                        {
+                            Block * p_block = new Block(yylineno);
+                            $$ = new While($3, p_block, yylineno);
+                        }
                         // 当while循环语句不使用括号包裹时，即直接是语句而非Block时，需要额外套一层Block
-                        if ($5->get_node_type() != SynNode::BLOCK)
+                        else if ($5->get_node_type() != SynNode::BLOCK)
                         {
                             Block * p_block = new Block(yylineno);
                             p_block->add_sub_program($5);
@@ -753,14 +762,20 @@ Whilestat       : WHILE '(' Expr ')' Statement
                         else
                             $$ = new While($3, (Block *) $5, yylineno);
                         
-                        parser_tracker("Whilestat");
+                        parser_tracker("Whilestat-> WHILE ( Expr ) Statement");
                     };
 
 // --完成--
 Ifstat          : IF  '(' Expr ')' Statement Elsestat
                     {
+                        // 当真条件语句为空时
+                        if ($5 == NULL)
+                        {
+                            Block * p_block = new Block(yylineno);
+                            $$ = new If($3, p_block, $6, yylineno);
+                        }
                         // 当if真条件不使用括号包裹时，即直接是语句而非Block时，需要额外套一层Block
-                        if ($5->get_node_type() != SynNode::BLOCK)
+                        else if ($5->get_node_type() != SynNode::BLOCK)
                         {
                             Block * p_block = new Block(yylineno);
                             p_block->add_sub_program($5);
@@ -768,7 +783,7 @@ Ifstat          : IF  '(' Expr ')' Statement Elsestat
                         }
                         else
                             $$ = new If($3, (Block *) $5, $6, yylineno);
-                        parser_tracker("Ifstat");
+                        parser_tracker("Ifstat-> IF ( Expr ) Statement Elsestat");
                     };
 
 // --完成--
@@ -777,7 +792,7 @@ Elsestat        :
                 | ELSE Statement
                     {
                         $$ = new Else($2, yylineno);
-                        parser_tracker("Elsestat");
+                        parser_tracker("Elsestat-> ELSE Statement");
                     };
 
 // --完成--
@@ -786,21 +801,21 @@ Altexpr         :
                 | Expr
                     {
                         $$ = $1;
-                        parser_tracker("Altexpr");
+                        parser_tracker("Altexpr-> Expr");
                     };
 
 // --完成--
 Expr            : Assexpr
                     {
                         $$ = $1;
-                        parser_tracker("Expr");
+                        parser_tracker("Expr-> Assexpr");
                     };
 
 // --完成--
 Assexpr         : Orexpr Asstail
                     {
                         $$ = node_struct($1, $2, yylineno);
-                        parser_tracker("Assexpr");
+                        parser_tracker("Assexpr-> Orexpr Asstail");
                     };
 
 // --完成--
@@ -808,14 +823,14 @@ Asstail         :   { $$ = NULL; }
                 | '=' Assexpr Asstail
                     {
                         $$ = operator_node_struct($1, $2, $3, yylineno);
-                        parser_tracker("Asstail");
+                        parser_tracker("Asstail-> = Assexpr Asstail");
                     };
 
 // --完成--
 Orexpr          : Andexpr Ortail
                     {
                         $$ = node_struct($1, $2, yylineno);
-                        parser_tracker("Orexpr");
+                        parser_tracker("Orexpr-> Andexpr Ortail");
                     };
 
 // --完成--
@@ -823,14 +838,14 @@ Ortail          :   { $$ = NULL; }
                 | OR Andexpr Ortail
                     {
                         $$ = operator_node_struct($1, $2, $3, yylineno);
-                        parser_tracker("Ortail");
+                        parser_tracker("Ortail-> OR Andexpr Ortail");
                     };
 
 // --完成--
 Andexpr         : Cmpexpr Andtail
                     {
                         $$ = node_struct($1, $2, yylineno);
-                        parser_tracker("Andexpr");
+                        parser_tracker("Andexpr-> Cmpexpr Andtail");
                     };
 
 // --完成--
@@ -838,14 +853,14 @@ Andtail         :   { $$ = NULL; }
                 | AND Cmpexpr Andtail
                     {
                         $$ = operator_node_struct($1, $2, $3, yylineno);
-                        parser_tracker("Andexpr");
+                        parser_tracker("Andexpr-> AND Cmpexpr Andtail");
                     };
 
 // --完成--
 Cmpexpr         : Aloexpr Cmptail
                     {
                         $$ = node_struct($1, $2, yylineno);
-                        parser_tracker("Cmpexpr");
+                        parser_tracker("Cmpexpr-> Aloexpr Cmptail");
                     };
 
 // --完成--
@@ -853,7 +868,7 @@ Cmptail         :   { $$ = NULL; }
                 | Cmps Aloexpr Cmptail
                     {
                         $$ = operator_node_struct($1, $2, $3, yylineno);
-                        parser_tracker("Cmptail");
+                        parser_tracker("Cmptail-> Cmps Aloexpr Cmptail");
                     };
 
 // --完成--
@@ -871,7 +886,7 @@ Aloexpr         : Item Alotail
                             $$ = new Op($1, $2->p_node, $2->p_operator, yylineno);
                         else
                             $$ = $1;
-                        parser_tracker("Aloexpr");
+                        parser_tracker("Aloexpr-> Item Alotail");
                     };
 
 // --完成--
@@ -879,7 +894,7 @@ Alotail         :   { $$ = NULL; }
                 | Addsub Item Alotail
                     {
                         $$ = operator_node_struct($1, $2, $3, yylineno);
-                        parser_tracker("Alotail");
+                        parser_tracker("Alotail-> Addsub Item Alotail");
                     };
 
 // 之后这些应该就是用来算数的了
@@ -894,7 +909,7 @@ Item            : Factor Itemtail
                             $$ = new Op($1, $2->p_node, $2->p_operator, yylineno);
                         else
                             $$ = $1;
-                        parser_tracker("Item");
+                        parser_tracker("Item-> Factor Itemtail");
                     };
 
 // --完成--
@@ -902,7 +917,7 @@ Itemtail        :   { $$ = NULL; }
                 | Muldiv Factor Itemtail
                     {
                         $$ = operator_node_struct($1, $2, $3, yylineno);
-                        parser_tracker("Itemtail");
+                        parser_tracker("Itemtail-> Muldiv Factor Itemtail");
                     };
 
 // --完成--
@@ -913,12 +928,12 @@ Muldiv          : '*' { $$ = new Operator(Operator::BINARY_MUL); }
 Factor          : Lop Factor
                     {
                         $$ = new Unary($2, $1, yylineno);
-                        parser_tracker("Factor Lop Factor");
+                        parser_tracker("Factor-> Lop Factor");
                     }
                 | Val
                     {
                         $$ = $1;
-                        parser_tracker("Factor Val");
+                        parser_tracker("Factor-> Val");
                     }
 
 // --完成--
@@ -933,12 +948,12 @@ Lop             : '!' { $$ = new Operator(Operator::UNARY_NOT); }
 Val             : Elem
                     {
                         $$ = $1;
-                        parser_tracker("Val Elem");
+                        parser_tracker("Val-> Elem");
                     }
                 | Elem Rop
                     {
                         $$ = new Unary($1, $2, yylineno);
-                        parser_tracker("Val Rop");
+                        parser_tracker("Val-> Elem Rop");
                     }
 
 // --完成--
@@ -949,57 +964,69 @@ Elem            : IDENT Idexpr
                     {
                         if ($2 != NULL)
                         {
-                            Block * p_root;
-                            Func * p_func;
-                            long func_label_in;
-                            TypeFunc * p_func_type;
-                            Terminal * p_func_terminal;
+                            if ($2->is_func_call)
+                            {
+                                Block * p_root;
+                                Func * p_func;
+                                long func_label_in;
+                                TypeFunc * p_func_type;
+                                Terminal * p_func_terminal;
 
-                            // 从root节点找函数节点，办法是很烂，但凑合用吧，要来不及了
-                            p_root = syn_tree.get_root();
-                            p_func = p_root->get_func($1);
-                            if (p_func == NULL)
-                                throw new ParserException("Can't find function " + (string) $1 + " when function call"
-                                    , yylineno);
-                            func_label_in = p_func->get_label_in();
-                            p_func_type = p_func->get_func_type();
-                            p_func_terminal = p_func->get_ret_terminal();
+                                // 从root节点找函数节点，办法是很烂，但凑合用吧，要来不及了
+                                p_root = syn_tree.get_root();
+                                p_func = p_root->get_func($1);
+                                if (p_func == NULL)
+                                    throw new ParserException("Can't find function " + (string) $1 + " when function call"
+                                        , yylineno);
+                                func_label_in = p_func->get_label_in();
+                                p_func_type = p_func->get_func_type();
+                                p_func_terminal = p_func->get_ret_terminal();
 
-                            if($2->is_func_call)
-                                $$ = new FuncCall($1, $2->p_params_nodes
-                                    , p_func_type, func_label_in, p_func_terminal, &sym_table, yylineno);
+                                if($2->is_func_call)
+                                    $$ = new FuncCall($1, $2->p_params_nodes
+                                        , p_func_type, func_label_in, p_func_terminal, &sym_table, yylineno);
+                            }
+                            else
+                            {
+                                $$ = new Variable($1, &sym_table, 1, $2->p_dim_expr, yylineno);
+                            }
                         }
                         else
                             $$ = new Variable($1, &sym_table, yylineno);
-                        parser_tracker("Elem IDENT Idexpr");
+                        parser_tracker("Elem-> IDENT Idexpr");
                     }
                 | '(' Expr')'
                     {
                         $$ = $2;
-                        parser_tracker("Elem (Expr)");
+                        parser_tracker("Elem-> (Expr)");
                     }
                 | Literal 
                     { 
                         $$ = $1; 
-                        parser_tracker("Elem Literal"); 
+                        parser_tracker("Elem-> Literal"); 
                     };
 
 Idexpr          :   { $$ = NULL; }
                 | '[' Expr ']' 
                     {
-                        parser_tracker("Idexpr [Expr]");
+                        struct var_params * p_var_params = new var_params();
+                        p_var_params->is_func_call = false;
+                        p_var_params->p_dim_expr = $2;
+
+                        $$ = p_var_params;
+                        parser_tracker("Idexpr-> [Expr]");
                     }
                 | '(' Realarg ')'
                     {
                         $$ = $2;
-                        parser_tracker("Idexpr (Realarg)");
+                        parser_tracker("Idexpr-> (Realarg)");
                     }
 
 // --完成--
 Literal         : NUM
                     {
                         $$ = new Constant($1, yylineno);
-                        parser_tracker("Literal");
+                        parser_tracker("Literal-> NUM");
                     }
 
 Realarg         :  // 这是不是也可能有问题
@@ -1049,7 +1076,7 @@ Realarg         :  // 这是不是也可能有问题
                         free(p_var_params);
                         
                         $$ = p_var_params_order;
-                        parser_tracker("Realarg Arg Realargs");
+                        parser_tracker("Realarg-> Arg Realargs");
                     }
 
 Realargs        :
@@ -1084,14 +1111,14 @@ Realargs        :
                         }
 
                         $$ = p_var_params;
-                        parser_tracker("Realargs");
+                        parser_tracker("Realargs-> , Arg Realargs");
                     }
 
 // --完成--
 Arg             : Expr
                     {
                         $$ = $1;
-                        parser_tracker("Arg");
+                        parser_tracker("Arg-> Expr");
                     }
 %%
 

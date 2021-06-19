@@ -14,7 +14,7 @@ Block * SynTree::get_root()
 
 void SynTree::gen_graph(std::ofstream * p_fout, std::string grahp_name)
 {
-    *p_fout << "graph " << grahp_name << " {" << std::endl;
+    *p_fout << "graph " << "\"" + grahp_name + "\"" << " {" << std::endl;
     this->p_block_->gen_graph(p_fout);
     *p_fout << "}" << std::endl;
 }

@@ -1,4 +1,5 @@
 #include "While.h"
+#include <iostream>
 
 While::While(SynNode * p_condition, Block * p_statement, int line): Stmt(line, SynNode::WHILE)
 {
@@ -8,7 +9,7 @@ While::While(SynNode * p_condition, Block * p_statement, int line): Stmt(line, S
     if (this->p_statement_ != NULL)
     {
         this->p_statement_->set_prev(this);
-        this->p_statement_->set_content("true");
+        this->p_statement_->set_content("loop");
     }
 }
 
@@ -21,7 +22,7 @@ void While::gen_graph(std::ofstream * p_fout) const
 }
 
 const Terminal * While::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
-    QuadTable * p_quad_table) const
+    QuadTable * p_quad_table)
 {
     long label[3];
     const Terminal * terminal_condition, * terminal_loop;

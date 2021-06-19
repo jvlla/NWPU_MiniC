@@ -36,6 +36,6 @@
 #include "ParserException.h"
 #include "LexerException.h"
 
-#define DEBUG  // 设置之后可以在各阶段递归调用时输出一些参数，方便看哪里出错出异常什么的
+// #define DEBUG  // 设置之后可以在各阶段递归调用时输出一些参数，方便看哪里出错出异常什么的
 
 using namespace std;

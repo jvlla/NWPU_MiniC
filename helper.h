@@ -51,6 +51,7 @@ struct var_params {
     union
     {
         SynNode *p_params_nodes[PARAMS_SIZE];  // 存储了临时变量的指针数组
+        SynNode * p_dim_expr;
     };
 };
 

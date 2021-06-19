@@ -47,7 +47,7 @@ void Block::gen_graph(std::ofstream * p_fout) const
 
 // 这个和上边好像啊，能合并吗？好像不太行，函数指针什么类型也不一样，以后再研究吧
 const Terminal * Block::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
-    QuadTable * p_quad_table) const
+    QuadTable * p_quad_table)
 {
     // 如果是root节点（虽然这么判断实在不太好，万一有个Root函数就可能有问题）
     if (this->content_ == "root")

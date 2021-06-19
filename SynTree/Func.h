@@ -9,11 +9,11 @@
 class Func: public Block
 {
   public:
-    Func(Block * p_block, TypeFunc * p_type, std::string func_name, int line);
+    Func(Block * p_block, TypeFunc * p_type, std::string func_name, SymTable * p_sym_table, int line);
     virtual void gen_graph(std::ofstream * p_fout) const;
     // 用于产生四元式的函数，每个节点依次递归调用，进行深度优先遍
     virtual const Terminal * gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
-        QuadTable * p_quad_table) const;
+        QuadTable * p_quad_table);
     // 返回函数名
     std::string get_func_name();
     // 返回函数入口label
@@ -28,6 +28,7 @@ class Func: public Block
     TypeFunc * p_type_;
     TempVariable * p_temp_;  // 只有int函数有p_temp_
     long label_func_in, label_func_out;  // 出入口label
+    SymTable * p_sym_table_;
 };
 
 #endif

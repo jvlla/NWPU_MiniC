@@ -15,7 +15,7 @@ void Else::gen_graph(std::ofstream * p_fout) const
 }
 
 const Terminal * Else::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
-    QuadTable * p_quad_table) const
+    QuadTable * p_quad_table)
 {
     this->p_statement_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
 

@@ -10,10 +10,10 @@ SOURCE_TREE = $(wildcard $(DIR_TREE)/*.cpp)
 TARGET_TABLE = $(patsubst %.cpp, $(DIR_TARGET)/%.o,$(notdir $(SOURCE_TABLE)))
 TARGET_TREE = $(patsubst %.cpp, $(DIR_TARGET)/%.o,$(notdir $(SOURCE_TREE)))
 
-.PHONY: all, prepare, compiler_haotian, clean, tmpclean
+
+.PHONY: all, prepare, compiler_haotian, clean, tmpclean, clean_translation
 
 all: prepare $(TARGET_TABLE) $(TARGET_TREE) compiler_haotian
-# all: prepare $(TARGET_TABLE) compiler_haotian
 
 prepare: lexer.l parser.y 
 	flex -o lexer.cpp --header-file=lexer.h lexer.l
@@ -66,3 +66,9 @@ clean:
 
 tmpclean:
 	rm -rf $(DIR_TARGET)/*.o
+
+clean_translation:
+	find . -name "*.dot"  | xargs rm -f
+	find . -name "*.png"  | xargs rm -f
+	find . -name "*_symbol_table.txt"  | xargs rm -f
+	find . -name "*_quad.txt"  | xargs rm -f

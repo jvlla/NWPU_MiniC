@@ -39,3 +39,9 @@ std::string Array::get_type_content() const
 
     return ret;
 }
+
+// 返回维度数组
+int * Array::get_dim_limits()
+{
+    return this->p_limit_;
+}

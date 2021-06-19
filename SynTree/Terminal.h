@@ -11,7 +11,7 @@ class Terminal: public SynNode
     virtual void gen_graph(std::ofstream * p_fout) const;
     // 用于产生四元式的函数，每个节点依次递归调用，进行深度优先遍
     virtual const Terminal * gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
-        QuadTable * p_quad_table) const = 0;
+        QuadTable * p_quad_table) = 0;
     // 返回各种变量、常量和临时变量的string表示
     virtual std::string to_string() const = 0;
   protected:

@@ -10,6 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/compiler_haotian",
             "args": [ "Test/test_temp.txt" ],
+            // "args": ["\"Basic function point check use cases\"/\"Arithmetic operation.c\".c"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

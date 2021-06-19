@@ -28,7 +28,7 @@ void If::gen_graph(std::ofstream * p_fout) const
 }
 
 const Terminal * If::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
-    QuadTable * p_quad_table) const
+    QuadTable * p_quad_table)
 {
     long label[3];
     const Terminal * terminal_condition, * terminal_true, * terminal_false;
@@ -53,7 +53,7 @@ const Terminal * If::gen_ir(int label_in, int label_out, int label_ret, TempVari
         p_quad_table->add_label(label[1]);
         // if条件并不能改变出入label，因为break或continue后跳转还是根据while的label的
         terminal_false = 
-            this->p_statement_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
+            this->p_else_->gen_ir(label_in, label_out, label_ret, temp_ret, p_quad_table);
         p_quad_table->add_label(label[2]);
     }
     else

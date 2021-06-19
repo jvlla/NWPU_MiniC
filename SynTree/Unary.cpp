@@ -16,7 +16,7 @@ void Unary::gen_graph(std::ofstream * p_fout) const
 }
 
 const Terminal * Unary::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
-    QuadTable * p_quad_table) const
+    QuadTable * p_quad_table)
 {
     const Terminal * ret_terminal;  // 子节点返回对象
     std::string arg, result;  // 输出到四元式的字符串

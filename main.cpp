@@ -11,6 +11,8 @@ SynTree syn_tree;
 QuadTable quad_table;
 ofstream graph_stream, sym_table_stream, quad_table_stream;
 
+string process_file_name(string file_name);
+
 int main(int argc, char *argv[])
 {
     // file_name_full是带文件类型、完整路径的文件名，file_name_path是带路径的文件名，
@@ -18,6 +20,7 @@ int main(int argc, char *argv[])
     string file_name_full, file_name_path, file_name;
     string sym_table_name, dot_name, graph_name, quad_table_name;
     string command;  // 调用graphviz的命令
+    string command_dot, command_graph; // 因为是直接执行命令所以带空格的文件名都要加上双引号
     int pos_point, pos_slash;
     
     // 如果没有提供输入文件
@@ -48,6 +51,8 @@ int main(int argc, char *argv[])
     dot_name = file_name_path + ".dot";
     graph_name = file_name_path + ".png";
     quad_table_name = file_name_path + "_quad.txt";
+    command_dot = process_file_name(dot_name);
+    command_graph = process_file_name(graph_name);
     // 打开输出文件
     sym_table_stream.open(sym_table_name);
     graph_stream.open(dot_name);
@@ -84,15 +89,15 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
         cout << "                                                 After gen_ir()" << endl;
 #endif
-        // quad_table.add("a", "b", "c", "d");
         quad_table.export_to_file(&quad_table_stream);
         // 使用graphviz生成树
-        command = "dot -Efontname=\"Microsoft Yahei\" -Tpng -o " + graph_name + " " + dot_name;
+        command = "dot -Efontname=\"Microsoft Yahei\" -Tpng -o " + command_graph + " " + command_dot;
         system((char*)command.c_str());
 
         sym_table_stream.close();
         graph_stream.close();
         quad_table_stream.close();
+        remove(dot_name.c_str());
     }
     catch(const SymTableException * p_sym_table_exception)
     {
@@ -152,4 +157,22 @@ int main(int argc, char *argv[])
     }
 
     return 0;
+}
+
+string process_file_name(string file_name)
+{
+    string result;
+    char * sub;
+    const char * delim = "/";
+
+    sub = strtok((char *) file_name.c_str(), delim);
+    while (sub)
+    {
+        result += "\"" + ((string) sub) + "\"/";
+        sub = strtok(NULL, delim);
+    }
+    // 删除最后多余的/
+    result = result.substr(0, result.length() - 1);
+
+    return result;
 }

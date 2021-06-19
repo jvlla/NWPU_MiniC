@@ -66,6 +66,15 @@ Type * SymTable::get_p_type(std::string name)
     throw new SymTableException("unexisted " + name, -1);
 }
 
+// 返回变量名对应的类型的指针
+Type * SymTable::get_p_type(int id)
+{
+    if (id < 0 || id > this->elems.size())
+        throw new SymTableException("illeagle variable id " + std::to_string(id), -1);
+    
+    return this->elems[id].p_type;
+}
+
 void SymTable::gen_table(std::ofstream * p_fout)
 {
     std::string type;

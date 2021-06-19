@@ -19,6 +19,8 @@ class SymTable
     std::string get_name(int id);
     // 返回变量名对应的类型的指针
     Type * get_p_type(std::string name);
+    // 返回变量名对应的类型的指针
+    Type * get_p_type(int id);
     // 将符号表输出到文件
     void gen_table(std::ofstream * p_fout);
   private:

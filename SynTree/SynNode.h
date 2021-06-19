@@ -31,7 +31,7 @@ class SynNode
     // 其它就返回NULL就好
     // label == -1时是异常值，比如最开始无处可跳的时候就可以用，但应该不用判断，正常情况传不到if这种能用到的地方
     virtual const Terminal * gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
-        QuadTable * p_quad_table) const = 0;
+        QuadTable * p_quad_table) = 0;
     // 返回节点行号
     int get_line() const;
     // 返回节点类型枚举变量

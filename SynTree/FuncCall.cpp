@@ -49,7 +49,7 @@ void FuncCall::gen_graph(std::ofstream * p_fout) const
 }
 
 const Terminal * FuncCall::gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
-    QuadTable * p_quad_table) const
+    QuadTable * p_quad_table)
 {
     const Terminal * p_terminal_node;
     std::string str_node, str_param;

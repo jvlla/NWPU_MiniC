@@ -14,6 +14,8 @@ class Array: public Type
     virtual bool isLegal(Type * restrict) const;
     // 只用在输出图的时候打印数组值
     virtual std::string get_type_content() const;
+    // 返回维度数组
+    int * get_dim_limits();
   private:
     int p_limit_[ARR_SIZE];
 };
