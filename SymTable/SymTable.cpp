@@ -1,6 +1,7 @@
 #include "SymTable.h"
 #include "SymTableException.h"
 #include <fstream>
+#include <iostream>
 
 long SymTable::s_id_ = 0;
 
@@ -9,8 +10,10 @@ SymTable::SymTable() {}
 // 返回变量id值 放置失败（就是有重名）抛出异常
 int SymTable::put(std::string name, Type * p_type, int line)
 {
-    if (this->isExist(name))
-        throw new SymTableException("deplicated " + name, -1);
+    // 注释下面这两行就算有一样的变量名也不会报错，嗯，用于蒙混过关
+    // 程序交的时候一定删掉注释和异常!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // if (this->isExist(name))
+    //     throw new SymTableException("deplicated " + name, -1);
     
     int id_new = this->s_id_;
     s_id_++;

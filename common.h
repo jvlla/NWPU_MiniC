@@ -12,7 +12,7 @@
 #include "SymTable/Type.h"
 #include "SymTable/Type.h"
 #include "SymTable/TypeFunc.h"
-#include "SymTable/Array.h"
+#include "SymTable/TypeArray.h"
 
 #include "SynTree/SynTree.h"
 #include "SynTree/SynNode.h"

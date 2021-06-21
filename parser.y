@@ -2,7 +2,7 @@
 #include "common.h"
 #include "lexer.h"
 #include "parser.hpp"
-#include "helper.h"
+#include "help.h"
 
 using namespace std;
 
@@ -146,8 +146,8 @@ Segment         :  Type Def
                                     }
                                     else
                                     {
-                                        Array * p_array = new Array(p_singel_def_var->dim_limit);
-                                        sym_table.put(p_singel_def_var->p_name, p_array, yylineno);
+                                        TypeArray * p_type_array = new TypeArray(p_singel_def_var->dim_limit);
+                                        sym_table.put(p_singel_def_var->p_name, p_type_array, yylineno);
                                     }
 
                                     // 因为符号表put实际上是创建了新的string对象，所以可以释放
@@ -221,37 +221,6 @@ Def             :  '*' IDENT Deflist
 
 Deflist         :  ',' Defdata Deflist
                     {
-                        // // 如果当前是最后一个变量声明
-                        // if ($3 == NULL)
-                        // {
-                        //     // 创建返回定义变量定义的结构体
-                        //     struct def_vars * p_def_vars = new struct def_vars();
-                        //     // 将变量名指针数字全部初始化为NULL
-                        //     for (int i = 0; i < VARS_SIZE; i++)
-                        //         p_def_vars->p_names[i] = NULL;
-                        //     p_def_vars->p_names[0] = $2;
-                        //     $$ = p_def_vars;
-                        // }
-                        // // 如果后面还跟着其它变量声明
-                        // else
-                        // {
-                        //     // 变量变量名指针数组，在最后放入当前变量名
-                        //     for (int i = 0; i < VARS_SIZE; i++)
-                        //     {
-                        //         // 如果变量声明已达到VARS_SIZE限制大小，报错抛出异常
-                        //         if (i == VARS_SIZE - 1 && $3->p_names[i] != NULL)
-                        //             throw new ParserException(
-                        //                 "The number of variable eclaration exceed limit " 
-                        //                 + to_string(VARS_SIZE), yylineno);
-                        //         if ($3->p_names[i] == NULL)
-                        //         {
-                        //             $3->p_names[i] = $2;
-                        //             // 放入变量名，退出循环
-                        //             break;
-                        //         }
-                        //     }
-                        //     $$ = $3;
-                        // }
                         struct def_vars * p_def_vars;
 
                         if($3 == NULL)
@@ -645,8 +614,8 @@ Localdef        : Type Defdata Deflist
                                 }
                                 else
                                 {
-                                    Array * p_array = new Array(p_singel_def_var->dim_limit);
-                                    sym_table.put(p_singel_def_var->p_name, p_array, yylineno);
+                                    TypeArray * p_type_array = new TypeArray(p_singel_def_var->dim_limit);
+                                    sym_table.put(p_singel_def_var->p_name, p_type_array, yylineno);
                                 }
 
                                 // 因为符号表put实际上是创建了新的string对象，所以可以释放

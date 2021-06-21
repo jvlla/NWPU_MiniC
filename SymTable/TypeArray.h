@@ -1,15 +1,15 @@
-#ifndef __ARRAY_H__
-#define __ARRAY_H__
+#ifndef __TYPE_ARRAY_H__
+#define __TYPE_ARRAY_H__
 #include "Type.h"
 
 // 限制数组维度最高为10
 #define ARR_SIZE 10
 
-class Array: public Type
+class TypeArray: public Type
 {
   public:
     // 传入的维度数组limit必须都先初始化为-1
-    Array(int * p_limit);
+    TypeArray(int * p_limit);
     // 用于在使用变量时判断使用是否合法
     virtual bool isLegal(Type * restrict) const;
     // 只用在输出图的时候打印数组值

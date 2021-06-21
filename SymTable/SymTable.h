@@ -29,6 +29,7 @@ class SymTable
         int id;
         std::string name;
         Type * p_type;
+        int rank;
         int line;
     };
     std::vector<elem> elems;

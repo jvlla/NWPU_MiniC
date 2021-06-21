@@ -1,4 +1,7 @@
-add() {
+int add(){ return 1; }
+
+
+int add() {
     int a,b;
     a = 1;
     b = 2;

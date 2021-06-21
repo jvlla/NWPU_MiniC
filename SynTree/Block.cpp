@@ -84,7 +84,7 @@ const Terminal * Block::gen_ir(int label_in, int label_out, int label_ret, TempV
 
 Func * Block::get_func(std::string func_name)
 {
-    if (this->content_ != "root")
+    if (this->content_ != "PROGRAM")
         throw new SynTreeException("wrong use in function call, this node isn't root node"
             , SynNode::get_line());
     

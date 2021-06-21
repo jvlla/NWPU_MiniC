@@ -1,5 +1,5 @@
 #include "Variable.h"
-#include "../SymTable/Array.h"
+#include "../SymTable/TypeArray.h"
 #include <iostream>
 
 Variable::Variable(std::string name, SymTable * p_sym_table, int line): Terminal(line, SynNode::VARIABLE)
@@ -27,7 +27,7 @@ Variable::Variable(std::string name, SymTable * p_sym_table, int dim, SynNode * 
     if (p_define_type->get_type() != Type::ARRAY)
         throw new SynTreeException("use normal variable " + name + " as array variable"
             , SynNode::get_line());
-    p_dims = ((Array *) p_define_type)->get_dim_limits();
+    p_dims = ((TypeArray *) p_define_type)->get_dim_limits();
     // 如果符号表中的数组变量没有维度或维度大于等于2
     if ((p_dims[0] == -1) || (p_dims[0] != -1 && p_dims[1] != -1))
         throw new SynTreeException("can only use linear array, can't use " + name

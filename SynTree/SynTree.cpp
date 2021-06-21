@@ -3,7 +3,7 @@
 SynTree::SynTree()
 {
     this->p_block_ = new Block(0);
-    this->p_block_->set_content("root");
+    this->p_block_->set_content("PROGRAM");
 }
 
 // 获得所有树的根节点，是Block类型

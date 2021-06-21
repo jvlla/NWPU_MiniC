@@ -1,13 +1,13 @@
-#include "Array.h"
+#include "TypeArray.h"
 
-Array::Array(int * limit): Type(Type::ARRAY)
+TypeArray::TypeArray(int * limit): Type(Type::ARRAY)
 {
     for (int i = 0; i < ARR_SIZE; i++)
         this->p_limit_[i] = limit[i];
 }
 
 // 用于在使用变量时判断使用是否合法
-bool Array::isLegal(Type * restrict) const
+bool TypeArray::isLegal(Type * restrict) const
 {
     if (!Type::isLegal(restrict))
         return false;
@@ -15,13 +15,13 @@ bool Array::isLegal(Type * restrict) const
     for (int i = 0; i < ARR_SIZE; i++)
     {
         // 变量维度大于变量类型维度，不合法
-        if (this->p_limit_[i] >= ((Array *)restrict)->p_limit_[i])
+        if (this->p_limit_[i] >= ((TypeArray *)restrict)->p_limit_[i])
             return false;
         // 变量维度小于变量类型维度，不合法
-        else if (this->p_limit_[i] == -1 && ((Array *)restrict)->p_limit_[i] != -1)
+        else if (this->p_limit_[i] == -1 && ((TypeArray *)restrict)->p_limit_[i] != -1)
             return false;
         // 两者长度匹配，在10维之前停止，合法
-        else if (this->p_limit_[i] == -1 && ((Array *)restrict)->p_limit_[i] == -1)
+        else if (this->p_limit_[i] == -1 && ((TypeArray *)restrict)->p_limit_[i] == -1)
             return true;
         else
             continue;
@@ -31,7 +31,7 @@ bool Array::isLegal(Type * restrict) const
 }
 
 // 只用在输出图的时候打印数组值
-std::string Array::get_type_content() const
+std::string TypeArray::get_type_content() const
 {
     std::string ret = "";
     for (int i = 0; i < ARR_SIZE && this->p_limit_[i] != -1; i++)
@@ -41,7 +41,7 @@ std::string Array::get_type_content() const
 }
 
 // 返回维度数组
-int * Array::get_dim_limits()
+int * TypeArray::get_dim_limits()
 {
     return this->p_limit_;
 }

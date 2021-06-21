@@ -28,8 +28,8 @@ $(DIR_TARGET)/parser.o: parser.cpp parser.hpp lexer.h
 $(DIR_TARGET)/QuadTable.o: QuadTable.cpp QuadTable.h
 	g++ $(CFLAGS) -c -o $@ QuadTable.cpp
 
-$(DIR_TARGET)/helper.o: helper.cpp helper.h
-	g++ $(CFLAGS) -c -o $@ helper.cpp
+$(DIR_TARGET)/help.o: help.cpp help.h
+	g++ $(CFLAGS) -c -o $@ help.cpp
 
 $(DIR_TARGET)/ParserException.o: ParserException.cpp ParserException.h
 	g++ $(CFLAGS) -c -o $@ ParserException.cpp
@@ -47,10 +47,10 @@ $(DIR_TARGET)/main.o: main.cpp lexer.h parser.hpp
 	g++ $(CFLAGS) -c -o $@ main.cpp
 
 compiler_haotian: $(DIR_TARGET)/lexer.o $(DIR_TARGET)/parser.o $(DIR_TARGET)/QuadTable.o \
-	$(DIR_TARGET)/helper.o $(DIR_TARGET)/ParserException.o $(DIR_TARGET)/LexerException.o \
+	$(DIR_TARGET)/help.o $(DIR_TARGET)/ParserException.o $(DIR_TARGET)/LexerException.o \
 	$(DIR_TARGET)/main.o
 	g++ $(CFLAGS) -o $@ $(DIR_TARGET)/main.o $(DIR_TARGET)/lexer.o $(DIR_TARGET)/parser.o \
-		$(DIR_TARGET)/QuadTable.o $(DIR_TARGET)/helper.o \
+		$(DIR_TARGET)/QuadTable.o $(DIR_TARGET)/help.o \
 		$(DIR_TARGET)/ParserException.o $(DIR_TARGET)/LexerException.o \
 		$(TARGET_TABLE) $(TARGET_TREE)
 

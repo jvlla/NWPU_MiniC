@@ -72,11 +72,10 @@ std::string Func::get_node_content() const
         {
             str_param = this->p_sym_table_->get_name(p_params_id[i]);
             ret += str_param;
-            if (i != PARAMS_SIZE && p_params_id[i] != -1)
+            if (i != PARAMS_SIZE && p_params_id[i + 1] != -1)
                 ret += ", ";
         }
     ret += ")";
 
     return ret;
 }
-
