@@ -30,18 +30,6 @@ const Terminal * Unary::gen_ir(int label_in, int label_out, int label_ret, TempV
     switch (this->p_operator_->get_type())
     {
         case Operator::UNARY_NOT:
-            // 这个比较复杂，翻译结果类似if(a == 0) t = 1; else t = 0;
-            // long label[3];
-            // for (int i = 0; i < 3; i++)
-            //     label[i] = SynNode::get_new_label();
-            // p_quad_table->add("JZ", arg, "", "L" + std::to_string(label[0]));
-            // p_quad_table->add("J", "", "", "L" + std::to_string(label[1]));
-            // p_quad_table->add_label(label[0]);
-            // p_quad_table->add("=", "1", "", result);
-            // p_quad_table->add("J", "", "", "L" + std::to_string(label[2]));
-            // p_quad_table->add_label(label[1]);
-            // p_quad_table->add("=", "0", "", result);
-            // p_quad_table->add_label(label[2]);
             Expr::quad_if_else(arg, "", result, "JZ", p_quad_table);
             break;
         case Operator::UNARY_MINUS:

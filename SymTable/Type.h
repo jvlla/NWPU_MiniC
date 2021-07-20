@@ -13,6 +13,7 @@ class Type
     type_set get_type();
     // 只用在输出图的时候打印数组值
     virtual std::string get_type_content() const;
+    bool operator==(const Type &that);
   private:
     type_set type_;
 };

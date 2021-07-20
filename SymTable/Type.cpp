@@ -24,3 +24,13 @@ std::string Type::get_type_content() const
     // 太坑了，string不能返回NULL，否则一旦用于赋值之类，会抛出异常，必须返回空字符串
     return "";
 }
+
+bool Type::operator==(const Type &that)
+{
+    // 都是函数，特别处理
+    if ((this->type_ == FUNC_INT && that.type_ == FUNC_VOID)
+        ||(this->type_ == FUNC_VOID && that.type_ == FUNC_INT))
+        return false;
+    else
+        return this->type_ == that.type_;
+}

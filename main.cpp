@@ -6,15 +6,18 @@
 using namespace std;
 extern int yyparse (void);
 
-SymTable sym_table;
-SynTree syn_tree;
-QuadTable quad_table;
-ofstream graph_stream, sym_table_stream, quad_table_stream;
+SymTable g_sym_table;
+SynTree g_syn_tree;
 
 string process_file_name(string file_name);
+void handle_exception(const exception * p_exception
+    , ofstream * p_sym_table_stream, ofstream * p_graph_stream, ofstream * p_quad_table_stream
+    , string sym_table_name, string dot_name, string quad_table_name);
 
 int main(int argc, char *argv[])
 {
+    QuadTable quad_table;
+    ofstream graph_stream, sym_table_stream, quad_table_stream;
     // file_name_full是带文件类型、完整路径的文件名，file_name_path是带路径的文件名，
     // file_name是只有名字的文件名，之后是分别用于不同的带完整路径、文件类型的文件名
     string file_name_full, file_name_path, file_name;
@@ -75,17 +78,17 @@ int main(int argc, char *argv[])
         cout << "                                                   After parser" << endl;
         cout << "-------------------------------------------------In gen_table()" << endl;
 #endif
-        sym_table.gen_table(&sym_table_stream);
+        g_sym_table.gen_table(&sym_table_stream);
 #ifdef DEBUG
         cout << "                                              After gen_table()" << endl;
         cout << "-------------------------------------------------In gen_graph()" << endl;
 #endif
-        syn_tree.gen_graph(&graph_stream, file_name);
+        g_syn_tree.gen_graph(&graph_stream, file_name);
 #ifdef DEBUG
         cout << "                                              After gen_graph()" << endl;
         cout << "----------------------------------------------------In gen_ir()" << endl;
 #endif
-        syn_tree.gen_ir(&quad_table);
+        g_syn_tree.gen_ir(&quad_table);
 #ifdef DEBUG
         cout << "                                                 After gen_ir()" << endl;
 #endif
@@ -101,59 +104,23 @@ int main(int argc, char *argv[])
     }
     catch(const SymTableException * p_sym_table_exception)
     {
-        cerr << p_sym_table_exception->what() << endl;
-        cerr << "Compile Failed!!!!!!" << endl;
-        // 清除打开文件
-        sym_table_stream.close();
-        graph_stream.close();
-        quad_table_stream.close();
-        remove(sym_table_name.c_str());
-        remove(dot_name.c_str());
-        remove(quad_table_name.c_str());
-
-        exit(EXIT_FAILURE);
+        handle_exception(p_sym_table_exception, &sym_table_stream, &graph_stream, &quad_table_stream
+            , sym_table_name, dot_name, quad_table_name);
     }
     catch(const SynTreeException * p_syn_tree_exception)
     {
-        cerr << p_syn_tree_exception->what() << endl;
-        cerr << "Compile Failed!!!!!!" << endl;
-        // 清除打开文件
-        sym_table_stream.close();
-        graph_stream.close();
-        quad_table_stream.close();
-        remove(sym_table_name.c_str());
-        remove(dot_name.c_str());
-        remove(quad_table_name.c_str());
-
-        exit(EXIT_FAILURE);
+        handle_exception(p_syn_tree_exception, &sym_table_stream, &graph_stream, &quad_table_stream
+            , sym_table_name, dot_name, quad_table_name);
     }
     catch(const ParserException * p_parser_exception)
     {
-        cerr << p_parser_exception->what() << endl;
-        cerr << "Compile Failed!!!!!!" << endl;
-        // 清除打开文件
-        sym_table_stream.close();
-        graph_stream.close();
-        quad_table_stream.close();
-        remove(sym_table_name.c_str());
-        remove(dot_name.c_str());
-        remove(quad_table_name.c_str());
-
-        exit(EXIT_FAILURE);
+        handle_exception(p_parser_exception, &sym_table_stream, &graph_stream, &quad_table_stream
+            , sym_table_name, dot_name, quad_table_name);
     }
     catch(const LexerException * p_lexer_exception)
     {
-        cerr << p_lexer_exception->what() << endl;
-        cerr << "Compile Failed!!!!!!" << endl;
-        // 清除打开文件
-        sym_table_stream.close();
-        graph_stream.close();
-        quad_table_stream.close();
-        remove(sym_table_name.c_str());
-        remove(dot_name.c_str());
-        remove(quad_table_name.c_str());
-
-        exit(EXIT_FAILURE);
+        handle_exception(p_lexer_exception, &sym_table_stream, &graph_stream, &quad_table_stream
+            , sym_table_name, dot_name, quad_table_name);
     }
 
     return 0;
@@ -175,4 +142,21 @@ string process_file_name(string file_name)
     result = result.substr(0, result.length() - 1);
 
     return result;
+}
+
+void handle_exception(const exception * p_exception
+    , ofstream * p_sym_table_stream, ofstream * p_graph_stream, ofstream * p_quad_table_stream
+    , string sym_table_name, string dot_name, string quad_table_name)
+{
+    cerr << p_exception->what() << endl;
+    cerr << "Compile Failed!!!!!!" << endl;
+    // 清除打开文件
+    p_sym_table_stream->close();
+    p_graph_stream->close();
+    p_quad_table_stream->close();
+    remove(sym_table_name.c_str());
+    remove(dot_name.c_str());
+    remove(quad_table_name.c_str());
+
+    exit(EXIT_FAILURE);
 }

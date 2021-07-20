@@ -10,7 +10,7 @@ class SymTable
   public:
     SymTable();
     // 返回变量id值 放置失败（就是有重名）抛出异常
-    int put(std::string name, Type * p_tpye, int line);
+    int put(std::string name, Type * p_type, int scope, int line);
     // 返回bool值确定有没有同名变量
     bool isExist(std::string name);
     // 返回变量名对应的变量id
@@ -29,7 +29,7 @@ class SymTable
         int id;
         std::string name;
         Type * p_type;
-        int rank;
+        int scope;
         int line;
     };
     std::vector<elem> elems;

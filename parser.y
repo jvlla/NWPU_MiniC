@@ -8,8 +8,9 @@ using namespace std;
 
 void yyerror(const char * msg);
 
-extern SymTable sym_table;
-extern SynTree syn_tree;
+extern SymTable g_sym_table;
+extern SynTree g_syn_tree;
+int g_scope = 1;
 %}
 
 %union
@@ -95,8 +96,8 @@ Program         : Segment
                             if ($1->p_def_func->p_body != NULL)
                             {
                                 Func * p_func = 
-                                    new Func($1->p_def_func->p_body, $1->p_def_func->p_type_func, $1->p_def_func->name, &sym_table, yylineno);
-                                syn_tree.get_root()->add_sub_program(p_func);
+                                    new Func($1->p_def_func->p_body, $1->p_def_func->p_type_func, $1->p_def_func->name, &g_sym_table, yylineno);
+                                g_syn_tree.get_root()->add_sub_program(p_func);
                                 $1->p_def_func->p_body->set_content($1->p_def_func->name);
                             }
 
@@ -109,18 +110,23 @@ Program         : Segment
                     }
                 | Program Segment
                     {
-                        // 当函数有函数体即为函数定义时
-                        if ($2->p_def_func->p_body != NULL)
+                        if (!$2->is_var_def)
                         {
-                            Func * p_func = 
-                                new Func($2->p_def_func->p_body, $2->p_def_func->p_type_func, $2->p_def_func->name, &sym_table, yylineno);
+                            // 当函数有函数体即为函数定义时
+                            if ($2->p_def_func->p_body != NULL)
+                            {
+                                Func * p_func = 
+                                    new Func($2->p_def_func->p_body, $2->p_def_func->p_type_func, $2->p_def_func->name, &g_sym_table, yylineno);
 
-                            syn_tree.get_root()->add_sub_program(p_func);
-                            $2->p_def_func->p_body->set_content($2->p_def_func->name);
+                                g_syn_tree.get_root()->add_sub_program(p_func);
+                                $2->p_def_func->p_body->set_content($2->p_def_func->name);
+                            }
+
+                            free($2->p_def_func->name);
+                            free($2->p_def_func);
                         }
 
-                        free($2->p_def_func->name);
-                        free($2->p_def_func);
+                    free($2);
                         parser_tracker("Program->, Program Segment");
                     };
 
@@ -142,12 +148,12 @@ Segment         :  Type Def
                                     // 如果是普通变量声明
                                     if (p_singel_def_var->dim_limit[0] == -1)
                                     {
-                                        sym_table.put(p_singel_def_var->p_name, $1, yylineno);
+                                        g_sym_table.put(p_singel_def_var->p_name, $1, 0, yylineno);
                                     }
                                     else
                                     {
                                         TypeArray * p_type_array = new TypeArray(p_singel_def_var->dim_limit);
-                                        sym_table.put(p_singel_def_var->p_name, p_type_array, yylineno);
+                                        g_sym_table.put(p_singel_def_var->p_name, p_type_array, 0, yylineno);
                                     }
 
                                     // 因为符号表put实际上是创建了新的string对象，所以可以释放
@@ -170,7 +176,7 @@ Segment         :  Type Def
                             else
                                 p_type_func = new TypeFunc(Type::FUNC_VOID, $2->p_def_func->param_ids);
                             $2->p_def_func->p_type_func = p_type_func;
-                            sym_table.put($2->p_def_func->name, p_type_func, yylineno);
+                            g_sym_table.put($2->p_def_func->name, p_type_func, 0, yylineno);
                         }
 
                         $$ = $2;
@@ -191,6 +197,7 @@ Type            :  INT
 
 Def             :  '*' IDENT Deflist
                     {
+                        throw new ParserException("Unsupported variable type pointer", yylineno);
                         parser_tracker("Def-> * IDENT Deflist");
                     }
                 |  IDENT Idtail
@@ -393,6 +400,7 @@ Idtail          :  Vardef Deflist
                                 p_def_func->param_ids[i] = -1;
 
                         $$ = p_def;
+                        g_scope++;
                         parser_tracker("Idtail-> (Para) Functail");
                     }
 
@@ -488,7 +496,7 @@ Oneparas        :
 
 Onepara         : Type Paradata
                     {
-                        $$ = sym_table.put($2, $1, yylineno);
+                        $$ = g_sym_table.put($2, $1, g_scope, yylineno);
                         parser_tracker("Onepara-> Type Paradata");
                     };
 
@@ -610,12 +618,12 @@ Localdef        : Type Defdata Deflist
                                 // 如果是普通变量声明
                                 if (p_singel_def_var->dim_limit[0] == -1)
                                 {
-                                    sym_table.put(p_singel_def_var->p_name, $1, yylineno);
+                                    g_sym_table.put(p_singel_def_var->p_name, $1, g_scope, yylineno);
                                 }
                                 else
                                 {
                                     TypeArray * p_type_array = new TypeArray(p_singel_def_var->dim_limit);
-                                    sym_table.put(p_singel_def_var->p_name, p_type_array, yylineno);
+                                    g_sym_table.put(p_singel_def_var->p_name, p_type_array, g_scope, yylineno);
                                 }
 
                                 // 因为符号表put实际上是创建了新的string对象，所以可以释放
@@ -942,7 +950,7 @@ Elem            : IDENT Idexpr
                                 Terminal * p_func_terminal;
 
                                 // 从root节点找函数节点，办法是很烂，但凑合用吧，要来不及了
-                                p_root = syn_tree.get_root();
+                                p_root = g_syn_tree.get_root();
                                 p_func = p_root->get_func($1);
                                 if (p_func == NULL)
                                     throw new ParserException("Can't find function " + (string) $1 + " when function call"
@@ -953,15 +961,15 @@ Elem            : IDENT Idexpr
 
                                 if($2->is_func_call)
                                     $$ = new FuncCall($1, $2->p_params_nodes
-                                        , p_func_type, func_label_in, p_func_terminal, &sym_table, yylineno);
+                                        , p_func_type, func_label_in, p_func_terminal, &g_sym_table, yylineno);
                             }
                             else
                             {
-                                $$ = new Variable($1, &sym_table, 1, $2->p_dim_expr, yylineno);
+                                $$ = new Variable($1, &g_sym_table, 1, $2->p_dim_expr, yylineno);
                             }
                         }
                         else
-                            $$ = new Variable($1, &sym_table, yylineno);
+                            $$ = new Variable($1, &g_sym_table, yylineno);
                         parser_tracker("Elem-> IDENT Idexpr");
                     }
                 | '(' Expr')'

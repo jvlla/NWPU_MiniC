@@ -8,16 +8,20 @@ long SymTable::s_id_ = 0;
 SymTable::SymTable() {}
 
 // 返回变量id值 放置失败（就是有重名）抛出异常
-int SymTable::put(std::string name, Type * p_type, int line)
+int SymTable::put(std::string name, Type * p_type, int scope, int line)
 {
-    // 注释下面这两行就算有一样的变量名也不会报错，嗯，用于蒙混过关
-    // 程序交的时候一定删掉注释和异常!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // if (this->isExist(name))
-    //     throw new SymTableException("deplicated " + name, -1);
-    
+    // 判断有没有在同一作用域内重名变量或重名函数
+    for (int i = 0; i < this->elems.size(); i++)
+    {
+        // 同名变量作用域不能重复，所以如果两个同名变量一个是全局一个是函数内不能，在不同函数内行
+        if (elems[i].name == name && (elems[i].scope == scope || elems[i].scope == 0)
+           && *(elems[i].p_type) == *p_type)
+            throw new SymTableException("deplicated " + name, line);
+    }
+ 
     int id_new = this->s_id_;
     s_id_++;
-    elem elem_new = {id_new, name, p_type, line};
+    elem elem_new = {id_new, name, p_type, scope, line};
     this->elems.push_back(elem_new);
 
     return id_new;
@@ -82,7 +86,7 @@ void SymTable::gen_table(std::ofstream * p_fout)
 {
     std::string type;
 
-    *p_fout << "ID\tTOKEN\tTYPE\t\tLINE" << std::endl;
+    *p_fout << "ID\tTOKEN\tTYPE\t\tSCOPE\tLINE" << std::endl;
     for (int i = 0; i < this->elems.size(); i++)
     {
         switch(elems[i].p_type->get_type())
@@ -106,6 +110,7 @@ void SymTable::gen_table(std::ofstream * p_fout)
                 type = "\t";
         }
 
-        *p_fout << elems[i].id << "\t" << elems[i].name << "\t" << type << elems[i].line << std::endl;
+        *p_fout << elems[i].id << "\t" << elems[i].name << "\t" << type << elems[i].scope << "\t"
+            << elems[i].line << std::endl;
     }
 }
