@@ -18,7 +18,6 @@ const char * LexerException::what() const throw()
         ret = this->message_;
     else
         ret = "Line(" + std::to_string(this->line_) + "): " + this->message_;
-    // 返回值要通过malloc分配，不然反正怎么就是有问题
     ret_char = (char *) malloc(strlen(ret.c_str()));
     strcpy(ret_char, ret.c_str());
     

@@ -1,5 +1,4 @@
-
-## 文法产生式
+文法产生式
 
 G[<program>]:
 <program> → { <segment> }                                   程序由可重复的segment块组成
