@@ -11,6 +11,7 @@ class Stmt: public SynNode
     // 用于产生四元式的函数，每个节点依次递归调用，进行深度优先遍
     virtual const Terminal * gen_ir(int label_in, int label_out, int label_ret, TempVariable * temp_ret, 
         QuadTable * p_quad_table) = 0;
+    virtual ~Stmt() = default;
   protected:
     virtual std::string get_node_content() const = 0;
 };

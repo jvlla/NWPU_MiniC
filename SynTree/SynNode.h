@@ -36,6 +36,7 @@ class SynNode
     int get_line() const;
     // 返回节点类型枚举变量
     node_type_set get_node_type() const;
+    virtual ~SynNode() = default;
   protected:
     // 被gen_graph()调用，产生图中节点连线
     void emit_link(std::ofstream * p_fout) const; 
